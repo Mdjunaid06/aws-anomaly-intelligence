@@ -265,6 +265,208 @@ The system must never overwrite the original raw data. Imputed values should alw
 
 ---
 
+## Ground Truth and Evaluation Strategy
+
+Our system must be evaluated against known or established ground truth, not only against a dashboard display. The project is built around measurable evaluation.
+
+### A. Controlled Anomaly Ground Truth
+
+The primary evaluation path starts with real historical weather observations.
+
+The team selects clean/normal observations from historical data and injects controlled anomalies such as:
+
+- sudden temperature spike,
+- sudden pressure spike or drop,
+- humidity spike or drop,
+- flatline or frozen sensor,
+- gradual sensor drift,
+- missing or communication gap,
+- inconsistent multivariate combination,
+- isolated station corruption.
+
+Because the team creates the anomaly, the exact ground truth is known:
+
+- when it started,
+- when it ended,
+- which station was affected,
+- which parameter was affected,
+- anomaly type,
+- original value,
+- modified value,
+- and the intended label.
+
+Example:
+
+Real temperature:
+24.3°C
+
+Injected faulty observation:
+48.7°C
+
+Ground truth:
+
+- anomaly = true
+- parameter = temperature
+- type = spike
+
+Model prediction:
+
+- anomaly = true
+- confidence = 0.96
+
+The prediction is then compared directly against the known injected label and metadata. This is the main quantitative evaluation path for the project.
+
+### B. Natural/Real-World Events
+
+The system must also be evaluated against naturally occurring situations where reliable labels or external evidence exist.
+
+This is necessary because not every unusual change in historical data is necessarily a sensor fault.
+
+The project must distinguish:
+
+- genuine regional weather event
+from
+- isolated sensor/data failure
+
+For example, if temperature changes sharply at many nearby stations at approximately the same time, that may represent a genuine regional weather event rather than a faulty sensor.
+
+Natural unusual weather is not automatically a sensor fault.
+
+This means the evaluation must not assume that every unusual observation in a real dataset is an anomaly. Instead, the system should use station history, multivariate consistency, and multi-station evidence to separate plausible real events from isolated faults.
+
+---
+
+## Evaluation Pipeline
+
+The evaluation flow is conceptually:
+
+```text
+REAL HISTORICAL DATA
+        |
+        +----------------------+
+        |                      |
+   Clean/normal          Controlled anomaly
+        |                      |
+        |                Known ground truth
+        |                      |
+        +-----------> OUR SYSTEM
+                           |
+                           v
+                    Model prediction
+                           |
+                           v
+                  Compare with truth
+                           |
+              +------------+-------------+
+              |            |             |
+           Precision     Recall         F1
+              |
+        False Alarm Rate
+        Detection Latency
+        Root-Cause Accuracy
+        Confidence/Calibration
+```
+
+This evaluation should not focus only on whether an anomaly was detected. It should also measure:
+
+1. Detection accuracy
+2. False positives / false alarm rate
+3. False negatives
+4. Detection latency
+5. Root-cause classification accuracy
+6. Confidence quality / calibration
+7. Sensor-health prediction where implemented
+8. Correct distinction between isolated sensor faults and regional events
+
+The project should therefore be evaluated on both detection quality and decision quality.
+
+---
+
+## Anomaly Injection Requirements
+
+Anomaly injection must be reproducible and well-documented.
+
+Every injected anomaly should have metadata such as:
+
+- station_id
+- timestamp
+- parameter
+- anomaly_type
+- original_value
+- modified_value
+- severity
+- start_time
+- end_time
+- injection_method
+- ground_truth_label
+
+This metadata allows the team to compare the model prediction with known labels and reproduce the experiment exactly.
+
+The project must never overwrite the original dataset.
+
+The system should keep separate data stores for:
+
+- raw data
+- cleaned data
+- anomaly-injected data
+- ground-truth labels
+- model predictions
+
+This separation is essential for reproducible experiments and honest evaluation.
+
+---
+
+## Baseline Comparison
+
+The experiments must compare the proposed system against simpler baselines. The complex model should not be assumed to be better automatically.
+
+### Baseline 1: Rule-based QC
+
+This baseline includes:
+
+- physical/range checks,
+- rate-of-change checks,
+- persistence/flatline checks,
+- missing-value checks.
+
+### Baseline 2: Simple statistical/ML detector
+
+This can include a practical method such as Isolation Forest or another simple detector using engineered features.
+
+### Proposed system
+
+The proposed system is the multi-evidence pipeline combining relevant temporal, multivariate, and spatial evidence, supported by diagnosis and explainability.
+
+The key requirement is that the experiments must show whether each additional component actually improves performance.
+
+---
+
+## Ablation Study
+
+A practical ablation experiment is sufficient for this project.
+
+Example configuration:
+
+A. Rules only
+B. Rules + ML
+C. Rules + ML + multivariate consistency
+D. Rules + ML + multivariate + spatial evidence
+E. Full system + diagnosis/health layer
+
+Compare each stage on:
+
+- Precision
+- Recall
+- F1
+- False alarm rate
+- Detection latency
+
+The goal is to verify which components actually contribute value, rather than assuming the full system is automatically superior.
+
+This is feasible for an SIH project and provides clear evidence for the final demo.
+
+---
+
 ## 12. Experiment Design
 
 The project should use a simple and transparent experiment structure.
@@ -284,7 +486,12 @@ The project should use a simple and transparent experiment structure.
 - Add neighbor-based context and evidence fusion
 - Test whether spatial information reduces false alarms and improves regional discrimination
 
-This progression is enough to show the value of the full system.
+### Experiment 4: Full multi-evidence system
+
+- Add multivariate checks, root-cause logic, and sensor health tracking
+- Evaluate end-to-end performance and explainability
+
+This progression is enough to show the value of the full system while keeping the project realistic.
 
 ---
 
@@ -297,8 +504,10 @@ The system should track the following metrics:
 - F1: harmonic mean of precision and recall
 - False Alarm Rate: proportion of normal observations incorrectly flagged
 - Detection Latency: time between the true anomaly and the system alert
+- Root-Cause Accuracy: how often the probable diagnosis matches the known label or supporting evidence
+- Confidence Calibration: whether the model confidence is meaningful and ordered correctly
 
-These metrics are practical and easy to explain to judges.
+These metrics are practical and explainable to judges.
 
 ---
 
@@ -339,6 +548,52 @@ This is one of the strongest arguments for the project’s design.
 ---
 
 ## 16. Avoiding Data Leakage
+
+The project must avoid leakage between training and testing data.
+
+Rules:
+
+- no observations from the test window appearing in the training window,
+- no station-level statistics computed from the future being used in the past,
+- no injected anomalies appearing in training if the goal is to evaluate normal behavior,
+- any feature engineering must be fitted only on the training portion,
+- evaluation should be performed on a separate held-out period.
+
+This keeps the results honest and technically credible.
+
+---
+
+## 17. Practical Implementation Guidance
+
+The team should build the pipeline in this order:
+
+1. data validation,
+2. baseline statistics,
+3. feature engineering,
+4. anomaly detector,
+5. neighbor comparison,
+6. evidence fusion,
+7. root-cause classification,
+8. sensor health tracking,
+9. evaluation on injected anomalies.
+
+This ordering keeps development realistic and reduces confusion between components.
+
+---
+
+## 18. Final Recommendation
+
+For the SIH MVP, the best approach is a compact, explainable pipeline:
+
+- baseline rule checks,
+- feature engineering,
+- Isolation Forest as the main detector,
+- neighbor-based contextual reasoning,
+- evidence fusion,
+- sensor health tracking,
+- and evaluation with controlled anomaly injection.
+
+This is the right balance of practicality, reliability, and demo quality.
 
 The project must avoid leakage between training and testing data.
 

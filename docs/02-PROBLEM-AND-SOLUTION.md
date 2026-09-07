@@ -195,6 +195,24 @@ The main value is not just detection, but decision support with evidence.
 
 ---
 
+### How We Prove the System Works
+
+We do not simply show a dashboard and claim the system works.
+
+The project demonstrates measurable performance by:
+
+1. replaying real historical weather observations,
+2. introducing controlled fault scenarios with known ground truth,
+3. running the detection pipeline,
+4. comparing the predicted result against the known truth,
+5. and using supporting evidence where naturally occurring events are present.
+
+This makes the project defensible and measurable.
+
+For naturally occurring events, the system uses available quality information and contextual evidence to distinguish a genuine regional weather event from an isolated sensor/data failure. We do not automatically label unusual real-world weather as a sensor fault.
+
+---
+
 ## 10. MVP Scope
 
 The MVP is intentionally focused on a realistic student project.

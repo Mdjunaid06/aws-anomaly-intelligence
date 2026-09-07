@@ -239,6 +239,37 @@ The processed data may be used for analysis, but the raw observations must remai
 
 ---
 
+## 5A. Data Collection for Evaluation and Ground Truth
+
+The dataset collection process must support evaluation, not just model training.
+
+The data collection teammate must provide:
+
+1. Raw historical observations
+2. Station metadata
+3. Timestamp information
+4. Temperature
+5. Relative humidity
+6. Atmospheric pressure
+7. Data source / provenance
+8. Quality flags if available
+9. Any source-specific observation or status flags
+10. Neighboring station information if available
+
+The raw data must never be modified.
+
+The project should clearly separate:
+
+- REAL OBSERVATION
+- INJECTED ANOMALY
+- MODEL PREDICTION
+
+Controlled anomaly injection should happen only after the real dataset has been collected and validated.
+
+This ensures that synthetic evaluation data is generated from clean historical observations, not by editing the original data source itself.
+
+---
+
 ## 6. Data Quality Checks
 
 The dataset must pass each quality check before being accepted.

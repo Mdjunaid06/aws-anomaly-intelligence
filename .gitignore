@@ -1,0 +1,20 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Keep directory markers while excluding generated data and artifacts.
+data/**/*
+!data/**/
+!data/**/.gitkeep
+ml/artifacts/**/*
+!ml/artifacts/**/
+!ml/artifacts/**/.gitkeep
+
+# Local notebooks and editor files.
+.ipynb_checkpoints/
+.vscode/

@@ -16,6 +16,10 @@ This document defines the SIH problem, the actual work we are solving, the MVP s
 
 **Theme:** Disaster Management
 
+## Final Technology Alignment
+
+The planned implementation uses React.js/Vite/Tailwind CSS with Recharts, Leaflet, React-Leaflet, and Axios; Python 3.12 with FastAPI, Uvicorn, Pydantic, SQLAlchemy, PostgreSQL, and python-dotenv; and Pandas, NumPy, SciPy, scikit-learn, PyTorch, PyArrow, and SHAP for data and ML work. Testing uses pytest and HTTPX, with Docker Compose for local deployment.
+
 The system must detect abnormal, inconsistent, or faulty observations from multiple Automatic Weather Stations and decide whether an unusual reading is more likely to be:
 
 - a genuine weather event,
@@ -70,14 +74,17 @@ Therefore, a threshold is useful as one signal, but it cannot be the complete de
 The project follows a layered reasoning pipeline:
 
 DATA
-→ VALIDATION
-→ FEATURE/CONTEXT GENERATION
-→ ANOMALY DETECTION
-→ SPATIAL/NEIGHBOR CHECK
-→ FINAL DECISION
-→ EXPLANATION
+→ DATA QUALITY / RULE-BASED QC
+→ FEATURE ENGINEERING
+→ MULTIPLE EVIDENCE SOURCES
+→ EVIDENCE FUSION
+→ ANOMALY CONFIDENCE
+→ ROOT-CAUSE DIAGNOSIS
 → SENSOR HEALTH
-→ DASHBOARD
+→ MAINTENANCE RECOMMENDATION
+→ STRUCTURED RESULTS
+→ GROUNDED GENAI EXPLANATION
+→ DASHBOARD / NATURAL-LANGUAGE INVESTIGATION
 
 This is the practical MVP design.
 
@@ -122,6 +129,10 @@ The system detects suspicious observation patterns, such as:
 - multivariate inconsistency across temperature, pressure, and humidity
 - abrupt deviation from a station’s own historical pattern
 - abnormal comparison with nearby stations
+- intermittent fault
+- local station anomaly
+- regional meteorological event
+- persistent sensor degradation
 
 These events are treated as DETECTED ANOMALIES, not final proof of sensor failure.
 
@@ -140,6 +151,9 @@ The system produces an explainable anomaly record with:
 - evidence summary
 - probable root cause
 - sensor health impact
+- maintenance recommendation
+- optional corrected or imputed value with provenance
+- structured evidence for downstream explanation
 
 Example output:
 
@@ -193,6 +207,20 @@ This is stronger than a single threshold alarm, and it is much more realistic fo
 
 The main value is not just detection, but decision support with evidence.
 
+## 10. GenAI Layer
+
+GenAI is an explanation and investigation layer, not the primary anomaly detector. Rule-based QC, statistical methods, and ML models remain responsible for numerical detection and confidence calculation.
+
+GenAI receives structured anomaly, evidence, confidence, root-cause, sensor-health, and maintenance results. It may:
+
+- explain an individual anomaly,
+- summarize a station’s recent behavior,
+- summarize network-wide anomaly status,
+- answer natural-language investigation questions,
+- explain why evidence supports a likely sensor fault or likely regional event.
+
+GenAI must not invent sensor readings, anomalies, confidence scores, station behavior, or evidence. Responses must be grounded in the structured results returned by the pipeline.
+
 ---
 
 ### How We Prove the System Works
@@ -213,7 +241,7 @@ For naturally occurring events, the system uses available quality information an
 
 ---
 
-## 10. MVP Scope
+## 11. MVP Scope
 
 The MVP is intentionally focused on a realistic student project.
 
@@ -223,10 +251,14 @@ The MVP includes:
 - validation and preprocessing,
 - historical and replayed time-series analysis,
 - rule-based anomaly checks,
-- one practical ML anomaly detector,
+- Isolation Forest, GRU/LSTM temporal detection, and PCA/Mahalanobis multivariate experiments,
 - neighbor/spatial comparison for context,
-- anomaly explanation,
+- evidence fusion and anomaly confidence,
+- root-cause diagnosis,
 - sensor health tracking,
+- maintenance recommendation,
+- grounded GenAI explanation and investigation,
+- optional traceable correction/imputation,
 - dashboard visibility,
 - Docker-based local demo execution.
 
@@ -234,7 +266,7 @@ This is sufficient for a strong SIH prototype and demo.
 
 ---
 
-## 11. Features Intentionally Out of Scope
+## 12. Features Intentionally Out of Scope
 
 The following are intentionally not part of the MVP:
 
@@ -244,15 +276,16 @@ The following are intentionally not part of the MVP:
 - Kafka-based event pipelines,
 - Kubernetes deployment,
 - large-scale enterprise operations dashboards,
-- exact physical cause identification of sensor failures,
+- guaranteed physical cause identification of sensor failures,
 - fully autonomous repair workflows,
+- autonomous GenAI anomaly detection or ungrounded agent behavior,
 - generalized global weather forecasting engine.
 
 These items may be useful later, but they are not required for the SIH demo.
 
 ---
 
-## 12. Expected Demo Flow
+## 13. Expected Demo Flow
 
 The demo should show the system working on real or replayed weather data.
 
@@ -688,7 +721,7 @@ The first working version should focus on:
 Optional features should be added only after the core pipeline works:
 
 ○ Corrected/imputed values
-○ Advanced predictive maintenance
+○ Autonomous physical maintenance or repair
 ○ Additional data sources
 ○ More sophisticated deep-learning architectures
 

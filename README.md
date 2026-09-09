@@ -1,6 +1,6 @@
 # AWS Anomaly Intelligence
 
-An explainable anomaly-quality system for observations from multiple Automatic Weather Stations (AWS).
+An AI-powered, explainable, spatiotemporal anomaly intelligence and predictive maintenance platform for observations from multiple Automatic Weather Stations (AWS).
 
 ## Project Scope
 
@@ -11,7 +11,7 @@ data/raw/ -> data/processed/ -> data/features/
 						 -> data/injected/ + data/ground_truth/
 ```
 
-The planned detection approach combines rule-based meteorological quality checks, Isolation Forest, multivariate consistency analysis, temporal models, spatial context, evidence fusion, root-cause classification, and sensor health scoring. Implementation and experiments are intentionally not included in this structure-initialization step.
+The planned detection approach combines rule-based meteorological quality checks, Isolation Forest, GRU/LSTM temporal detection, PCA/Mahalanobis multivariate consistency analysis, spatial context, evidence fusion, root-cause classification, sensor health scoring, and maintenance recommendations. A grounded GenAI layer will explain structured pipeline results and support natural-language investigation; it is not the primary numerical anomaly detector.
 
 The architecture supports multiple stations and observation fields including `station_id`, `timestamp`, coordinates, temperature, atmospheric pressure, and relative humidity.
 
@@ -26,7 +26,7 @@ The architecture supports multiple stations and observation fields including `st
 
 ## Development Status
 
-This repository currently contains the project structure and essential configuration only. Application logic, model implementations, datasets, database migrations, and frontend files will be added in later phases.
+This repository currently contains the project structure, documentation, and essential configuration only. Application logic, model implementations, datasets, database migrations, and frontend files will be added in later phases.
 
 ## Data Rules
 
@@ -37,4 +37,4 @@ This repository currently contains the project structure and essential configura
 
 ## Configuration
 
-Copy `.env.example` to `.env` and adjust local values when implementation begins. Python dependencies are listed in `requirements.txt`; frontend dependencies will belong to `frontend/package.json` when the React/Vite application is initialized.
+Copy `.env.example` to `.env` and adjust local values when implementation begins. Python dependencies are listed in `requirements.txt`; project metadata and pytest configuration are in `pyproject.toml`; frontend dependencies will belong to `frontend/package.json` when the React/Vite application is initialized.

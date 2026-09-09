@@ -2,7 +2,9 @@
 
 ## ML Pipeline and Experiments
 
-This document defines the practical machine-learning approach for the MVP. The goal is not to use the most complicated model possible. The goal is a reliable, explainable, demonstrable system that works on real weather data and supports a strong SIH demo.
+This document defines the practical machine-learning approach for the MVP. The goal is a reliable, explainable, demonstrable multi-evidence system that works on real weather data and supports a strong SIH demo.
+
+The implementation stack is Python 3.12 with Pandas, NumPy, SciPy, scikit-learn, PyTorch, PyArrow, and SHAP. The ML pipeline integrates with FastAPI, PostgreSQL, and the Docker-based application; frontend technologies are documented in the application guide.
 
 ---
 
@@ -110,7 +112,7 @@ Cons:
 - harder to explain,
 - may be less reliable for a short student demo without careful preprocessing.
 
-### Option D: LSTM/GRU-based model
+### Option D: GRU/LSTM temporal autoencoder
 
 Pros:
 
@@ -127,11 +129,17 @@ Cons:
 
 ---
 
-## 5. Recommended Primary Approach for the MVP
+## 5. Final Multi-Evidence Approach for the MVP
 
-The recommended primary model is:
+The system is not a single anomaly classifier. Its evidence sources are:
 
-> Isolation Forest on engineered station-level and temporal features, combined with rule-based QC and spatial context.
+- rule-based meteorological QC,
+- Isolation Forest on engineered station-level and temporal features,
+- GRU/LSTM-based temporal anomaly detection experiments,
+- PCA/Mahalanobis multivariate consistency detection,
+- spatial/neighbor comparison when valid station coverage exists.
+
+Evidence fusion combines these signals into anomaly confidence. Isolation Forest is the practical tabular baseline, while GRU/LSTM and PCA/Mahalanobis are evaluated as complementary evidence sources rather than assumed improvements.
 
 This is the most practical balance for the project because it is:
 
@@ -164,7 +172,7 @@ Examples of multivariate checks:
 - pressure and humidity moving in a way that is inconsistent with local weather patterns,
 - temporally consistent but physically implausible variable combinations.
 
-This stage can use simple residual-based or distance-based methods and should not require a large complex model.
+This stage should use PCA and/or Mahalanobis distance over validated multivariate features. It should remain interpretable and should not be treated as proof of a physical fault.
 
 ---
 
@@ -262,6 +270,16 @@ Only use corrected or imputed values when:
 - and they are used only for model support or dashboard smoothing.
 
 The system must never overwrite the original raw data. Imputed values should always be clearly labeled as corrected or estimated values.
+
+## 11. Predictive Maintenance Recommendation
+
+Sensor health is converted into a maintenance recommendation using anomaly frequency, severity, persistence, affected variable, confidence, and recent station behavior. The output may recommend monitoring, review, calibration, or inspection. It is a risk-based recommendation, not an exact physical diagnosis or autonomous repair action.
+
+## 12. Grounded GenAI Layer
+
+GenAI receives structured outputs from evidence fusion, root-cause diagnosis, sensor health, maintenance recommendation, and provenance. It can explain an anomaly, summarize station or network behavior, and answer natural-language investigation questions.
+
+GenAI must not perform primary numerical detection or invent readings, anomalies, confidence scores, station behavior, or evidence. Every response must be traceable to structured pipeline results.
 
 ---
 
@@ -435,7 +453,7 @@ This can include a practical method such as Isolation Forest or another simple d
 
 ### Proposed system
 
-The proposed system is the multi-evidence pipeline combining relevant temporal, multivariate, and spatial evidence, supported by diagnosis and explainability.
+The proposed system is the multi-evidence pipeline combining rule-based QC, Isolation Forest, GRU/LSTM temporal detection, PCA/Mahalanobis multivariate detection, and spatial evidence where valid, followed by evidence fusion, diagnosis, health, maintenance recommendation, and grounded explanation.
 
 The key requirement is that the experiments must show whether each additional component actually improves performance.
 
@@ -451,7 +469,8 @@ A. Rules only
 B. Rules + ML
 C. Rules + ML + multivariate consistency
 D. Rules + ML + multivariate + spatial evidence
-E. Full system + diagnosis/health layer
+E. Full multi-evidence system + diagnosis/health/maintenance layer
+F. Full structured system + grounded GenAI explanation layer
 
 Compare each stage on:
 
@@ -478,7 +497,7 @@ The project should use a simple and transparent experiment structure.
 
 ### Experiment 2: Baseline + ML
 
-- Add the main anomaly detector
+- Add Isolation Forest and compare complementary GRU/LSTM and PCA/Mahalanobis evidence sources
 - Measure improvement in detection quality
 
 ### Experiment 3: Baseline + ML + Spatial Context
@@ -488,8 +507,14 @@ The project should use a simple and transparent experiment structure.
 
 ### Experiment 4: Full multi-evidence system
 
-- Add multivariate checks, root-cause logic, and sensor health tracking
+- Add multivariate checks, root-cause logic, sensor health, and maintenance recommendation
 - Evaluate end-to-end performance and explainability
+
+### Experiment 5: Grounded GenAI evaluation
+
+- Provide GenAI only with structured pipeline results.
+- Check that explanations preserve station IDs, timestamps, confidence, evidence, and root-cause labels.
+- Check that unsupported questions produce an explicit insufficient-evidence response rather than invented facts.
 
 This progression is enough to show the value of the full system while keeping the project realistic.
 
@@ -583,14 +608,16 @@ This ordering keeps development realistic and reduces confusion between componen
 
 ## 18. Final Recommendation
 
-For the SIH MVP, the best approach is a compact, explainable pipeline:
+For the SIH MVP, the best approach is a compact, explainable multi-evidence pipeline:
 
 - baseline rule checks,
 - feature engineering,
-- Isolation Forest as the main detector,
-- neighbor-based contextual reasoning,
-- evidence fusion,
-- sensor health tracking,
+- Isolation Forest as a tabular baseline,
+- GRU/LSTM temporal evidence,
+- PCA/Mahalanobis multivariate evidence,
+- neighbor-based contextual reasoning where valid,
+- evidence fusion, diagnosis, health, and maintenance recommendation,
+- grounded GenAI explanation,
 - and evaluation with controlled anomaly injection.
 
 This is the right balance of practicality, reliability, and demo quality.
@@ -629,14 +656,16 @@ This ordering keeps development realistic and reduces confusion between componen
 
 ## 18. Final Recommendation
 
-For the SIH MVP, the best approach is a compact, explainable pipeline:
+For the SIH MVP, the best approach is a compact, explainable multi-evidence pipeline:
 
 - baseline rule checks,
 - feature engineering,
-- Isolation Forest as the main detector,
-- neighbor-based contextual reasoning,
-- evidence fusion,
-- sensor health tracking,
+- Isolation Forest as a tabular baseline,
+- GRU/LSTM temporal evidence,
+- PCA/Mahalanobis multivariate evidence,
+- neighbor-based contextual reasoning where valid,
+- evidence fusion, diagnosis, health, and maintenance recommendation,
+- grounded GenAI explanation,
 - and evaluation with controlled anomaly injection.
 
 This is the right balance of practicality, reliability, and demo quality.

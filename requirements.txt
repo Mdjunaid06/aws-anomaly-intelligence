@@ -1,15 +1,24 @@
+# Backend
 fastapi
-uvicorn
+uvicorn[standard]
 pydantic
+pydantic-settings
 sqlalchemy
-psycopg[binary]
+psycopg2-binary
 python-dotenv
+httpx
+
+# Data Processing
 pandas
 numpy
 scipy
+pyarrow
+
+# Machine Learning
 scikit-learn
+joblib
 torch
 shap
-pyarrow
+
+# Testing
 pytest
-httpx

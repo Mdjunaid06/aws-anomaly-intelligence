@@ -10,10 +10,15 @@ This document is intended to help a new teammate understand the project, run the
 
 ### Prerequisites
 
-The exact implementation stack is TBD — to be finalized during implementation, but the project should assume the following practical prerequisites:
+The finalized implementation stack is:
 
 - Git
-- Python or another backend language compatible with the project implementation
+- Python 3.12
+- FastAPI, Uvicorn, Pydantic, SQLAlchemy, and python-dotenv
+- PostgreSQL
+- React.js, Vite, Tailwind CSS, Recharts, Leaflet, React-Leaflet, and Axios
+- Pandas, NumPy, SciPy, scikit-learn, PyTorch, PyArrow, and SHAP
+- pytest and HTTPX
 - Docker and Docker Compose
 - a local code editor or IDE
 - data source access to real AWS/weather observations
@@ -185,9 +190,10 @@ The ML team is responsible for:
 
 - building the feature engineering pipeline,
 - implementing the baseline and rule-based QC checks,
-- selecting and validating the main anomaly detector,
+- selecting and validating the rule-based QC, Isolation Forest, GRU/LSTM, PCA/Mahalanobis, and spatial evidence sources,
 - creating the spatial context logic,
 - validating the evidence fusion rule,
+- validating sensor-health and maintenance recommendations,
 - measuring Precision, Recall, F1, False Alarm Rate, and Detection Latency,
 - and documenting the experiments and ablation results.
 
@@ -208,6 +214,8 @@ The backend team is responsible for:
 
 The backend should not become a distributed system for the MVP. The goal is a clear and maintainable implementation that works end-to-end.
 
+The backend also owns structured anomaly results, evidence provenance, sensor health, maintenance recommendations, and the grounded GenAI context. GenAI must not replace numerical detection or invent unsupported facts.
+
 ---
 
 ## PART G — FRONTEND TEAM GUIDE
@@ -218,6 +226,7 @@ The frontend team is responsible for:
 - showing station and anomaly information clearly,
 - building the station detail and anomaly detail views,
 - representing map status and historical trends,
+- presenting maintenance recommendations and grounded natural-language investigation,
 - and making the demo easy to present.
 
 The UI should prioritize clarity and demo-friendly visuals over unnecessary complexity.
@@ -276,6 +285,10 @@ Show that the system can distinguish between:
 - a possible genuine regional weather event.
 
 This demonstrates the project’s core value over a simple threshold-based system.
+
+### 12. Demonstrate grounded explanation
+
+Ask the investigation interface to explain the selected result or summarize the station. Confirm that the response cites only structured observations, evidence, confidence, root cause, health, and maintenance information, and states when evidence is insufficient.
 
 ---
 

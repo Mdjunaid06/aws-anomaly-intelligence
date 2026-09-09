@@ -4,6 +4,8 @@
 
 This document defines the practical MVP application and the minimal API needed for the dashboard and demo. The design is intentionally small, clean, and directly aligned with the SIH problem.
 
+The application stack is React.js/Vite/Tailwind CSS with Recharts, Leaflet, React-Leaflet, and Axios on the frontend, and Python 3.12/FastAPI/Uvicorn with Pydantic, SQLAlchemy, PostgreSQL, and python-dotenv on the backend. Docker Compose provides local orchestration.
+
 ---
 
 ## 1. Dashboard Purpose
@@ -18,6 +20,7 @@ Its purpose is to let a user:
 - review evidence for a flagged anomaly,
 - understand probable root cause,
 - monitor sensor health,
+- review maintenance recommendations,
 - and replay historical data in a demo mode.
 
 The dashboard should be simple enough for an SIH judge to understand in under five minutes.
@@ -99,6 +102,8 @@ It should include:
 
 This page directly supports the project’s explainability requirement.
 
+The explanation is generated from structured pipeline evidence. A grounded GenAI layer may turn that result into human-readable language, but it must not invent readings, confidence, or evidence.
+
 ---
 
 ## 6. Sensor Health
@@ -111,7 +116,9 @@ The view may include:
 - recent anomaly count,
 - recent persistence trend,
 - quality category,
-- possible maintenance recommendation.
+- maintenance recommendation such as monitor, review, calibrate, or inspect.
+
+Maintenance recommendations are evidence-based and are not automated repair commands.
 
 This is not a predicted physical diagnosis, but a practical health tracking feature.
 
@@ -145,9 +152,20 @@ The dashboard should show time-series plots for:
 
 The charts should be easy to read and focused on the SIH demo rather than advanced analytics.
 
+## 9. Natural-Language Investigation
+
+The dashboard may provide a natural-language investigation surface backed by the GenAI explanation layer. Supported tasks include:
+
+- explain a selected anomaly,
+- summarize a station’s recent behavior,
+- summarize current network-wide anomaly status,
+- explain why evidence supports a likely local fault or regional event.
+
+GenAI receives structured observations, evidence scores, anomaly confidence, root cause, sensor health, maintenance recommendation, and provenance. It must state insufficient evidence when the structured results do not support an answer.
+
 ---
 
-## 9. Replay/Demo Mode
+## 10. Replay/Demo Mode
 
 Replay mode is essential for the SIH prototype.
 
@@ -472,6 +490,8 @@ The API should be:
 - small,
 - REST-style,
 - clear,
-- and focused on dashboard and demo use.
+- and focused on dashboard, demo, health, maintenance, and grounded investigation use.
+
+Natural-language questions may be handled through the application’s investigation flow using structured results from the existing API and backend services. GenAI must preserve station IDs, timestamps, confidence, evidence, root cause, health, and maintenance information, and must state insufficient evidence instead of inventing facts.
 
 There is no need for a large microservice ecosystem for this project. A single backend application is enough for the MVP.

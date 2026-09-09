@@ -14,11 +14,19 @@ This document explains the complete idea behind the project. Every team member s
 
 **Problem Statement:** AI/ML-Based Intelligent Anomaly Detection for Automatic Weather Stations (AWS)
 
+**Final system vision:** AI-powered, explainable, spatiotemporal anomaly intelligence and predictive maintenance platform for Automatic Weather Stations.
+
 **Organization:** Ministry of Earth Sciences (MoES)
 
 **Theme:** Disaster Management
 
 **Category:** Software
+
+---
+
+## Final Technology Stack
+
+The frontend will use React.js, Vite, Tailwind CSS, Recharts, Leaflet, React-Leaflet, and Axios. The backend will use Python 3.12, FastAPI, Uvicorn, Pydantic, SQLAlchemy, PostgreSQL, and python-dotenv. Data and ML work will use Pandas, NumPy, SciPy, scikit-learn, PyTorch, PyArrow, and SHAP, with pytest and HTTPX for testing and Docker Compose for local deployment.
 
 ---
 
@@ -91,7 +99,7 @@ We are building the intelligent software layer that analyzes the observations pr
 
 We are building an:
 
-**AI/ML-based real-time AWS observation quality and anomaly intelligence system.**
+**AI-powered, explainable, spatiotemporal AWS anomaly intelligence and predictive maintenance platform.**
 
 The system receives observations from multiple AWS stations and continuously checks whether the observations look normal.
 
@@ -114,6 +122,12 @@ When something suspicious occurs, the system should:
 8. Track the health of the affected sensor.
 
 9. Explain why the system generated the alert.
+
+10. Recommend maintenance action from sensor-health evidence.
+
+11. Preserve optional traceable corrected or imputed values without changing raw data.
+
+12. Provide a grounded GenAI layer for explanations, summaries, and natural-language investigation.
 
 ---
 
@@ -291,6 +305,8 @@ NULL
 Multivariate Inconsistency
 
 Temperature, pressure and humidity may contain a combination that is inconsistent with learned behavior.
+
+Other supported experiment types include temperature drops, pressure or humidity anomalies, intermittent faults, local station anomalies, regional meteorological events, and persistent sensor degradation.
 
 ---
 
@@ -547,7 +563,15 @@ This demonstrates that our system is doing more than simple threshold detection.
 
 ---
 
-17. What Makes the Project Technically Strong?
+17. GenAI Responsibility
+
+GenAI is not the primary anomaly detector. Numerical detection remains the responsibility of rule-based QC, statistical methods, and ML models. GenAI receives structured pipeline results and may explain individual anomalies, summarize station or network behavior, answer natural-language investigation questions, and explain why evidence supports a likely sensor fault or regional event.
+
+GenAI must not invent readings, anomalies, confidence scores, station behavior, or evidence. Its output must be traceable to structured results.
+
+---
+
+18. What Makes the Project Technically Strong?
 
 The strength does not come from saying:
 
@@ -575,7 +599,7 @@ Each component should be experimentally evaluated.
 
 ---
 
-18. What We Must NOT Claim
+19. What We Must NOT Claim
 
 We must not claim that:
 
@@ -599,7 +623,7 @@ Our contribution is the **integration and validation of a complete real-time AWS
 
 ---
 
-19. Project Development Order
+20. Project Development Order
 
 The team should build the project in this order:
 
@@ -621,23 +645,25 @@ The team should build the project in this order:
         ↓
 9. Build root-cause analysis
         ↓
-10. Build sensor-health system
+10. Build sensor-health and maintenance recommendation system
         ↓
-11. Build backend
+11. Build structured results and grounded GenAI explanation layer
         ↓
-12. Build frontend
+12. Build backend
         ↓
-13. Build replay/demo system
+13. Build frontend
         ↓
-14. Dockerize everything
+14. Build replay/demo system
         ↓
-15. Run experiments
+15. Dockerize everything
         ↓
-16. Prepare SIH demo
+16. Run experiments
+        ↓
+17. Prepare SIH demo
 
 ---
 
-20. Golden Rule of the Project
+21. Golden Rule of the Project
 
 Every alert should answer:
 
@@ -651,8 +677,8 @@ The final system should provide evidence that a human can understand.
 
 ---
 
-21. One-Line Mental Model
+22. One-Line Mental Model
 
 Remember the project like this:
 
-**"We monitor multiple weather stations, detect suspicious observations, compare them with their own history and surrounding stations, determine whether the behavior is likely a sensor/data problem or a genuine weather event, explain the decision, and track sensor health over time."**
+**"We monitor multiple weather stations, detect and diagnose suspicious observations with spatiotemporal evidence, recommend maintenance from sensor health, and use grounded GenAI to explain the structured decision to humans."**

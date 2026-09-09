@@ -4,6 +4,10 @@
 
 This document describes the practical system design for the SIH MVP. The architecture is intentionally simple, modular, and realistic for a student team to implement and demonstrate.
 
+The final system is an AI-powered, explainable, spatiotemporal anomaly intelligence and predictive maintenance platform. Numerical models produce structured evidence; a grounded GenAI layer turns those results into human-readable explanations and investigation responses.
+
+The finalized stack is Python 3.12/FastAPI/Uvicorn/Pydantic/SQLAlchemy with PostgreSQL for the backend, React.js/Vite/Tailwind CSS with Recharts and Leaflet for the frontend, and Docker Compose for local deployment. Data and ML work uses Pandas, NumPy, SciPy, scikit-learn, PyTorch, PyArrow, and SHAP.
+
 ---
 
 ## 1. Architecture Goal
@@ -36,15 +40,25 @@ Data Ingestion
         ↓
 Validation + Preprocessing
         ↓
-Anomaly Detection
+Data Quality / Rule-Based QC
         ↓
-Neighbor/Spatial Check
+Feature Engineering
         ↓
-Evidence Fusion
+Multiple Evidence Sources
+        |-- Isolation Forest
+        |-- GRU/LSTM temporal detection
+        |-- PCA/Mahalanobis multivariate detection
+        |-- Spatial/neighbor comparison
         ↓
-Root Cause / Explanation
+Evidence Fusion and Anomaly Confidence
         ↓
-Sensor Health
+Root-Cause Diagnosis
+        ↓
+Sensor Health and Maintenance Recommendation
+        ↓
+Structured Results
+        ↓
+Grounded GenAI Explanation Layer
         ↓
 API
         ↓
@@ -100,16 +114,17 @@ Typical checks include:
 
 Preprocessing includes sorting records by time, normalizing formats, creating time windows, and preserving provenance. The original raw record remains untouched.
 
-### 3.4 Anomaly Detection
+### 3.4 Feature Engineering and Anomaly Detection
 
 This layer looks for suspicious patterns in each station’s observation history.
 
 It is not a single black-box model. It combines:
 
 - rule-based quality checks,
-- temporal deviation checks,
-- multivariate consistency checks,
-- and a practical ML detector.
+- Isolation Forest on engineered features,
+- GRU/LSTM temporal detection experiments,
+- PCA/Mahalanobis multivariate consistency detection,
+- and spatial/neighbor comparison when coverage is valid.
 
 The entire anomaly detection flow should work on a shared model or shared pipeline rather than a separate model per station.
 
@@ -163,13 +178,21 @@ It tracks:
 
 This helps the system move from “there is a bad reading right now” to “this sensor is degrading or repeatedly misbehaving.”
 
-### 3.9 API
+### 3.9 Maintenance Recommendation
+
+This layer converts sensor-health evidence into a practical recommendation such as monitor, review, calibrate, or inspect. It is a risk-based recommendation, not an automated physical diagnosis or repair command.
+
+### 3.10 Structured Results and GenAI Explanation
+
+The pipeline emits structured observations, evidence scores, anomaly confidence, probable root cause, sensor health, maintenance recommendation, and provenance for optional corrected values. GenAI receives only these structured results. It may explain anomalies, summarize stations or the network, and answer investigation questions, but it must not invent readings, evidence, or confidence values.
+
+### 3.11 API
 
 The API exposes observation, anomaly, and health data to the dashboard and other consumers.
 
 This layer is intentionally small and practical for the MVP.
 
-### 3.10 Dashboard
+### 3.12 Dashboard
 
 The dashboard is the human-facing layer for the project.
 
@@ -182,6 +205,7 @@ It shows:
 - sensor health,
 - nearby station comparison,
 - and replay/demo controls.
+- grounded natural-language investigation.
 
 ---
 
@@ -196,11 +220,13 @@ Validation and schema checks
         ↓
 Preprocessing and feature generation
         ↓
-Anomaly detection stages
+Data quality, feature engineering, and evidence stages
         ↓
 Neighbor comparison and evidence fusion
         ↓
-Decision + explanation
+Decision, confidence, diagnosis, and structured results
+        ↓
+GenAI explanation / investigation
         ↓
 Storage and API exposure
         ↓
@@ -230,15 +256,19 @@ Feature engineering
         ↓
 Rule-based QC
         ↓
-ML anomaly detector
+Rule-based QC
         ↓
-Multivariate consistency checks
+Isolation Forest score
+        ↓
+GRU/LSTM temporal score
+        ↓
+PCA/Mahalanobis multivariate score
         ↓
 Neighbor score + spatial context
         ↓
-Evidence fusion
+Evidence fusion and anomaly confidence
         ↓
-Final anomaly decision
+Root cause, health, maintenance, and structured result
 ```
 
 This keeps the model understandable and allows experimentation without redesigning the whole app.
@@ -252,12 +282,12 @@ For each observation, the system should follow this decision flow:
 1. Validate raw record.
 2. Build the feature set from local station context.
 3. Evaluate rule-based plausibility.
-4. Run the main anomaly detector.
+4. Run the evidence-source models.
 5. Evaluate multivariate consistency.
-6. Compare against nearby station behavior.
-7. Combine evidence.
-8. Produce an anomaly decision with explanation.
-9. Update sensor health state.
+6. Compare against nearby station behavior when coverage is sufficient.
+7. Fuse evidence into anomaly confidence.
+8. Produce diagnosis, sensor health, maintenance recommendation, and structured results.
+9. Generate a grounded explanation when requested.
 
 The final result should answer: “Why did the system consider this abnormal?”
 
@@ -338,7 +368,7 @@ The system needs a lightweight storage layer to support:
 - replay and evaluation data,
 - and dashboard queries.
 
-For the MVP, the storage can be a simple relational database or a lightweight local database such as SQLite, with the possibility to move to a more robust option later if needed. This is a practical design decision and not a final architectural commitment.
+For the MVP, PostgreSQL is the relational storage layer. Files remain useful for raw, processed, feature, injected, and ground-truth datasets; PostgreSQL stores application observations, detections, health state, recommendations, and queryable structured results.
 
 The important requirement is clear separation between raw data and derived outputs.
 
@@ -358,7 +388,7 @@ For the MVP, Docker should handle:
 
 This is enough to make the system easy to run on a laptop or judge environment without special cloud infrastructure.
 
-The exact service composition and startup steps are TBD — to be finalized during implementation.
+The service composition remains intentionally small: one Python/FastAPI backend, one React/Vite frontend when implemented, and PostgreSQL managed with Docker Compose. No Kafka, Kubernetes, Spark, Redis, or microservice layer is required.
 
 ---
 

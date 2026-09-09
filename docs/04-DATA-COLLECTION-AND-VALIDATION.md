@@ -4,6 +4,8 @@
 
 This document is the data team’s operating guide for collecting, validating, and accepting AWS datasets for the project. The goal is to use real observational weather data, keep raw data untouched, and build a clean pipeline for experimentation and demo work.
 
+Data is exchanged as CSV, Parquet, and JSON files and stored in PostgreSQL when application persistence is required. Python 3.12 with Pandas, NumPy, SciPy, PyArrow, and Pydantic will support collection, validation, and schema handling.
+
 ---
 
 ## 1. What Data We Need
@@ -49,7 +51,11 @@ These values are necessary for:
 - temporal anomaly detection,
 - multivariate checks,
 - spatial neighbor comparisons,
-- and evidence explanation.
+- evidence explanation,
+- sensor-health tracking,
+- and maintenance recommendations.
+
+Spatial reasoning is conditional. Neighbor comparisons are used only when station coordinates, timestamps, variable coverage, and sufficient nearby observations are valid. The system must report insufficient coverage rather than claim a regional event without support.
 
 ---
 
@@ -232,6 +238,7 @@ The data collection process should be explicit and repeatable.
 - Check unrealistic sensor readings.
 - Check timestamp continuity and ordering.
 - Check the spatial metadata for plausibility.
+- Confirm that neighboring-station comparisons are possible before deriving spatial features.
 
 ### Step 7: Save raw and processed versions separately
 
@@ -374,6 +381,7 @@ The project should logically separate data into the following categories:
 - INJECTED TEST DATA: controlled anomalies added for evaluation only
 - FEATURE DATA: engineered features used by the ML pipeline
 - MODEL EVALUATION DATA: train/validation/test partitions and metrics metadata
+- GROUND TRUTH: injection labels, affected stations and variables, timing, severity, and provenance
 
 This separation is important because the raw observation is the ground truth and should never be overwritten.
 
@@ -394,10 +402,17 @@ These are deliberately modified copies created only for evaluation. They must no
 Controlled anomaly types:
 
 - spike
+- drop
+- pressure anomaly
+- humidity anomaly
 - flatline
 - drift
 - missing block
+- intermittent fault
 - multivariate inconsistency
+- local station anomaly
+- regional meteorological event
+- persistent sensor degradation
 
 Examples:
 
@@ -416,6 +431,8 @@ Each injected anomaly should be recorded with:
 - whether it is for evaluation or demo use,
 - and ground-truth label.
 
+The ground-truth record should also preserve the original value, injected value or pattern, severity, start and end timestamps, injection method, and whether the case is intended for evaluation or demo replay. Ground truth is stored separately from injected observations and model predictions.
+
 This makes evaluation reproducible and prevents confusion between real and injected values.
 
 ---
@@ -431,3 +448,5 @@ The project must never confuse:
 - CORRECTED/IMPUTED VALUE
 
 This distinction is critical for honest evaluation and explainability.
+
+Validated observations, quality flags, evidence scores, and provenance may be passed as structured results to the GenAI explanation layer. GenAI may summarize or explain those results, but it must not modify raw data or invent readings, anomalies, confidence, station behavior, or evidence.

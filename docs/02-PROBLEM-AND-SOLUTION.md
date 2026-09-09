@@ -377,6 +377,12 @@ The exact fusion method and weights must be determined through validation experi
 
 We should not invent weights merely to make the demo look good.
 
+Spatial agreement is continuous evidence, not a vote. The spatial score incorporates usable-neighbor coverage, distance weighting, station reliability, data quality, temporal alignment, direction similarity, magnitude similarity, and elevation/context where available. Missing stations reduce coverage confidence; they are not counted as disagreeing stations.
+
+The system does not assume that consensus automatically means a genuine meteorological event. Spatial consensus is one evidence source and is validated against temporal, multivariate, data-quality and common-mode evidence.
+
+This design supports localized or sub-regional events when a geographically coherent subset changes together, while geographically separated agreement remains weak or inconclusive. Repeated identical values or sequences are checked separately for common-mode data failure before regional attribution.
+
 ---
 
 10. Layer 6 — Root-Cause Diagnosis
@@ -387,12 +393,17 @@ Possible categories:
 
 Normal
 Spike
+Drop
 Flatline / Frozen Sensor
 Drift
 Missing / Communication Failure
+Intermittent Fault
 Multivariate Inconsistency
+Localized / Sub-Regional Event
+Regional Meteorological Event
+Common-Mode Data Fault
 Possible Sensor Fault
-Possible Regional Event
+Inconclusive
 
 Example reasoning:
 

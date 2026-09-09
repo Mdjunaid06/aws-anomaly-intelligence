@@ -132,10 +132,16 @@ The entire anomaly detection flow should work on a shared model or shared pipeli
 
 This component compares an active station with nearby stations when location information is available.
 
+It produces a continuous spatial evidence object rather than a hard station-count decision. The object records total, usable, and missing neighbors; weighted agreement; distance and neighborhood weights; temporal alignment; direction and magnitude similarity; station reliability; data quality; elevation/context; geographic coherence; and common-mode risk.
+
 Examples:
 
 - if one station spikes while neighbors remain stable, the system gains evidence for a likely sensor issue,
 - if all local stations move together, the system gains evidence for a credible regional event.
+
+The spatial score is coverage-aware. A case with three usable stations out of five expected stations is not treated as 3/5 disagreement: missing observations are tracked separately and reduce confidence. A low-count but geographically coherent subset can support a localized event, while distant agreement remains weak. Station reliability reduces the influence of historically unreliable stations.
+
+Common-mode checks inspect repeated exact values, identical sequences, suspiciously perfect correlation, stale-value propagation, ingestion duplication, and simultaneous source/message failure. Repeated sequence evidence can override an otherwise strong spatial consensus as a likely common-mode data fault.
 
 This stage is important because it reduces false alarms and helps the system explain “why” an alert was raised.
 
@@ -151,6 +157,8 @@ This stage should produce:
 - and a short evidence summary.
 
 The fusion logic should be simple and transparent. It should not be a mysterious “black box” with no interpretable result.
+
+Decision states are explicit: `normal`, `anomaly`, `likely_regional_event`, `likely_local_event`, `likely_sensor_fault`, `likely_sensor_drift`, `likely_stuck_sensor`, `likely_communication_fault`, `likely_common_mode_data_fault`, `inconclusive`, and `insufficient_spatial_evidence`. Confidence thresholds are centralized configuration values and must be tuned with validation data rather than scattered magic numbers.
 
 ### 3.7 Root Cause / Explanation
 
@@ -242,6 +250,8 @@ The system should always maintain a clear distinction between:
 - CORRECTED/IMPUTED VALUE
 
 Raw values must not be overwritten.
+
+Structured fusion results include anomaly status, classification, confidence, evidence scores, affected stations, supporting stations, contradicting stations, root cause, recommended action, and explanation facts. GenAI receives this object only after numerical processing.
 
 ---
 

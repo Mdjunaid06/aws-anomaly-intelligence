@@ -187,6 +187,12 @@ For a station at a given time, compute:
 - similarity to neighboring stations in the same time window,
 - whether the anomaly is isolated or shared.
 
+The spatial model must not use a hard rule such as “X out of Y stations agree.” It calculates a continuous score from usable-neighbor coverage, distance and neighborhood weighting, direction and magnitude similarity, temporal onset/duration alignment, station data quality, station reliability, and elevation/context where available. Track `total_neighbors`, `usable_neighbors`, and `missing_neighbors` separately.
+
+Two nearby stations can support a localized event when their direction, magnitude, timing, and quality are coherent. Two distant stations should produce weak or inconclusive evidence even if their values are similar. A station with poor historical reliability contributes less to consensus.
+
+Common-mode checks cover exact value duplication, identical sequences, suspiciously perfect correlation, stale last-known values, ingestion duplication, and simultaneous source/message failure. This prevents broad agreement from being treated automatically as a genuine regional event.
+
 This helps answer:
 
 - Is the station different from neighbors?
@@ -213,6 +219,8 @@ final_score = w1 * QC + w2 * temporal + w3 * multivariate + w4 * spatial + w5 * 
 
 The exact weights should be chosen based on experiments and validation, not guessed in advance.
 
+The system does not assume that consensus automatically means a genuine meteorological event. Spatial consensus is one evidence source and is validated against temporal, multivariate, data-quality and common-mode evidence.
+
 ---
 
 ## 9. Root-Cause Classification
@@ -224,6 +232,8 @@ Root-cause classification should not claim exact physical proof. It should produ
 - likely data transmission or formatting problem,
 - possible regional event,
 - or insufficient evidence.
+
+The classifier also supports localized/sub-regional meteorological events, common-mode data faults, stuck sensors, communication faults, sensor drift, and explicit inconclusive or insufficient-spatial-evidence states. A 2-out-of-5 pattern is not classified from the count alone: geographic coherence, temporal alignment, magnitude/direction similarity, reliability, multivariate evidence, and data quality determine whether it is localized, faulty, or inconclusive.
 
 This classification should be based on:
 
@@ -429,6 +439,8 @@ The system should keep separate data stores for:
 - anomaly-injected data
 - ground-truth labels
 - model predictions
+
+The evaluation set must include spatial edge cases: 5/5 and 4/5 coherent regional changes, 3/5 agreement, nearby versus distant 2/5 agreement, isolated spikes, missing neighbors, unreliable stations, common-mode duplication, flatlines, drift, communication gaps, intermittent faults, multivariate spikes, timing differences, and regional events with different magnitudes.
 
 This separation is essential for reproducible experiments and honest evaluation.
 

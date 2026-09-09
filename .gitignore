@@ -9,6 +9,10 @@ __pycache__/
 
 # Keep directory markers while excluding generated data and artifacts.
 data/**/*
+!data/raw/
+!data/raw/NOAA/
+!data/raw/NOAA/Pune_stations/
+!data/raw/NOAA/Pune_stations/*.psv
 !data/**/
 !data/**/.gitkeep
 ml/artifacts/**/*
@@ -18,3 +22,4 @@ ml/artifacts/**/*
 # Local notebooks and editor files.
 .ipynb_checkpoints/
 .vscode/
+

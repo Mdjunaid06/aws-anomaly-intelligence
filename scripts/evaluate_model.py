@@ -13,6 +13,7 @@ from ml.src.config import PipelineConfig
 from ml.src.detectors.isolation_forest import IsolationForestDetector
 from ml.src.detectors.multivariate import MahalanobisDetector
 from ml.src.evaluation.metrics import evaluate_predictions, save_metrics
+from ml.src.models.sequence import GRUDetector
 from ml.src.models.pipeline import score_observations
 from ml.src.paths import GROUND_TRUTH_FILE, INJECTED_OBSERVATIONS, METRICS_DIR, MODEL_DIR
 from ml.src.preprocessing import load_processed_observations
@@ -22,12 +23,17 @@ def main() -> None:
 	logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 	if not INJECTED_OBSERVATIONS.exists() or not GROUND_TRUTH_FILE.exists():
 		raise FileNotFoundError("Run scripts/inject_anomalies.py before evaluation.")
-	models = {
+	baseline_models = {
 		"isolation_forest": IsolationForestDetector.load(MODEL_DIR),
 		"mahalanobis": MahalanobisDetector.load(MODEL_DIR),
 	}
-	all_predictions = score_observations(
-		load_processed_observations(INJECTED_OBSERVATIONS), models, PipelineConfig()
+	gru = GRUDetector.load(MODEL_DIR)
+	observations = load_processed_observations(INJECTED_OBSERVATIONS)
+	all_predictions = score_observations(observations, baseline_models, PipelineConfig())
+	all_gru_predictions = score_observations(
+		observations,
+		{**baseline_models, "gru": gru},
+		PipelineConfig(),
 	)
 	train_end = pd.Timestamp(PipelineConfig().train_end)
 	train_predictions = all_predictions[all_predictions["timestamp"] < train_end]
@@ -40,7 +46,7 @@ def main() -> None:
 	ground_truth = pd.read_csv(GROUND_TRUTH_FILE)
 	metrics = evaluate_predictions(predictions, ground_truth, start_time=train_end)
 	isolation_flags = pd.Series(
-		models["isolation_forest"].flag(all_predictions),
+		baseline_models["isolation_forest"].flag(all_predictions),
 		index=all_predictions.index,
 	)
 	baseline_masks = {
@@ -60,8 +66,20 @@ def main() -> None:
 		metrics["baselines"][name] = evaluate_predictions(
 			baseline, ground_truth, start_time=train_end
 		)
+	gru_predictions = all_gru_predictions[all_gru_predictions["timestamp"] >= train_end].copy()
+	gru_prediction_path = METRICS_DIR / "injected_predictions_gru.csv"
+	gru_predictions.to_csv(gru_prediction_path, index=False)
+	gru_only = gru_predictions.copy()
+	gru_only["anomaly"] = gru_only["gru_score"].fillna(0.0) >= 1.0
+	gru_only["classification"] = gru_only["anomaly"].map(
+		{True: "gru_anomaly", False: "normal"}
+	)
+	metrics["gru_only"] = evaluate_predictions(gru_only, ground_truth, start_time=train_end)
+	metrics["fusion_plus_gru"] = evaluate_predictions(
+		gru_predictions, ground_truth, start_time=train_end
+	)
 	clean_predictions = score_observations(
-		load_processed_observations(), models, PipelineConfig()
+		load_processed_observations(), baseline_models, PipelineConfig()
 	)
 	clean_predictions = clean_predictions[clean_predictions["timestamp"] >= train_end].copy()
 	clean_path = METRICS_DIR / "clean_holdout_predictions.csv"

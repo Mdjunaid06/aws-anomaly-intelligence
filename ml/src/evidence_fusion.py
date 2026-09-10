@@ -35,6 +35,7 @@ class FusionConfig:
     data_quality_weight: float = 0.06
     persistence_weight: float = 0.06
     drift_weight: float = 0.10
+    gru_weight: float = 0.10
     anomaly_threshold: float = 0.55
     regional_threshold: float = 0.60
     localized_threshold: float = 0.42
@@ -58,6 +59,7 @@ class EvidenceInput:
     drift_score: float = 0.0
     stuck_score: float = 0.0
     communication_score: float = 0.0
+    gru_score: float | None = None
 
 
 @dataclass(frozen=True)
@@ -94,7 +96,7 @@ def _clamp(value: float) -> float:
 
 def _weighted_score(evidence: EvidenceInput, config: FusionConfig) -> float:
     spatial_score = evidence.spatial.spatial_score if evidence.spatial else 0.0
-    weights = (
+    weights = [
         config.temporal_weight,
         config.multivariate_weight,
         config.isolation_weight,
@@ -103,8 +105,8 @@ def _weighted_score(evidence: EvidenceInput, config: FusionConfig) -> float:
         config.data_quality_weight,
         config.persistence_weight,
         config.drift_weight,
-    )
-    values = (
+    ]
+    values = [
         evidence.temporal_score,
         evidence.multivariate_score,
         evidence.isolation_score,
@@ -113,7 +115,10 @@ def _weighted_score(evidence: EvidenceInput, config: FusionConfig) -> float:
         evidence.data_quality_score,
         evidence.persistence_score,
         evidence.drift_score,
-    )
+    ]
+    if evidence.gru_score is not None:
+        weights.append(config.gru_weight)
+        values.append(evidence.gru_score)
     weight_total = sum(weights)
     return _clamp(sum(weight * _clamp(value) for weight, value in zip(weights, values)) / weight_total)
 
@@ -242,6 +247,7 @@ def fuse_evidence(
             "temporal_score": evidence.temporal_score,
             "multivariate_score": evidence.multivariate_score,
             "isolation_score": evidence.isolation_score,
+            "gru_score": evidence.gru_score,
             "spatial_score": spatial_score,
             "rule_qc_score": evidence.rule_qc_score,
             "data_quality_score": evidence.data_quality_score,

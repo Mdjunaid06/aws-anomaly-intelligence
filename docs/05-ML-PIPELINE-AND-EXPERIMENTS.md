@@ -43,6 +43,29 @@ Useful features include:
 
 The feature set should remain compact and interpretable.
 
+### GRU sequence detector
+
+The project also includes an optional PyTorch GRU next-observation detector as
+an additional evidence source. It uses only `temperature_c`,
+`relative_humidity_pct`, and `pressure_hpa`. Sequences are constructed
+independently per station, chronologically, with a default length of 24
+observations. Windows are not allowed to cross station boundaries or gaps over
+the configured communication-gap interval, and rows with missing weather
+inputs are not used to fabricate sequences.
+
+The GRU is fitted only on clean observations before `2025-01-01`. It predicts
+the next standardized T/RH/P vector; mean squared prediction error is scaled
+by a training 99th-percentile threshold into a `[0, 1]` anomaly score. Rows
+without a complete causal history receive no GRU score. The model artifact
+stores the scaler, variables, sequence length, architecture, threshold, and
+training configuration.
+
+GRU evidence is optional in `EvidenceInput` and contributes through a
+configurable fusion weight only when a GRU model is supplied. It cannot bypass
+the existing confidence gate by itself. The frozen baseline path remains
+available without the GRU model, and evaluation reports baseline fusion,
+GRU-only, and fusion-plus-GRU results separately.
+
 ---
 
 ## 3. Rule-Based QC

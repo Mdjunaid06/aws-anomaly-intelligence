@@ -37,6 +37,16 @@ class PipelineConfig:
     isolation_estimators: int = 200
     mahalanobis_flag_percentile: float = 99.0
 
+    # Optional GRU next-observation detector.
+    gru_sequence_length: int = 24
+    gru_hidden_size: int = 64
+    gru_num_layers: int = 1
+    gru_dropout: float = 0.0
+    gru_epochs: int = 8
+    gru_batch_size: int = 64
+    gru_learning_rate: float = 0.001
+    gru_threshold_percentile: float = 99.0
+
     variables: tuple[str, ...] = field(
         default_factory=lambda: ("temperature_c", "relative_humidity_pct", "pressure_hpa")
     )

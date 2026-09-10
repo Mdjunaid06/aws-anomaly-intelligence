@@ -24,6 +24,7 @@ def main() -> None:
 	print(f"Training rows: {models['train_rows']}")
 	print("Saved: ml/artifacts/models/isolation_forest.joblib")
 	print("Saved: ml/artifacts/models/mahalanobis.joblib")
+	print("Saved: ml/artifacts/models/gru_detector.joblib")
 
 
 if __name__ == "__main__":

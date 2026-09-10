@@ -22,6 +22,7 @@ CLEAN_FEATURES = FEATURES_DIR / "aws_features_2024_2025.csv"
 INJECTED_OBSERVATIONS = INJECTED_DIR / "aws_observations_injected.csv"
 INJECTED_FEATURES = FEATURES_DIR / "aws_features_injected.csv"
 GROUND_TRUTH_FILE = GROUND_TRUTH_DIR / "injected_anomalies.csv"
+GRU_MODEL_FILE = MODEL_DIR / "gru_detector.joblib"
 
 
 def ensure_dirs() -> None:

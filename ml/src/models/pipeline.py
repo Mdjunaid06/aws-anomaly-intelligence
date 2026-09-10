@@ -17,6 +17,7 @@ from ml.src.evidence_fusion import EvidenceInput, FusionConfig, fuse_evidence
 from ml.src.features.build_features import build_feature_frame
 from ml.src.features.spatial_features import attach_spatial_features
 from ml.src.models.health import add_sensor_health
+from ml.src.models.sequence import GRUDetector
 from ml.src.preprocessing import load_processed_observations
 
 LOGGER = logging.getLogger(__name__)
@@ -49,10 +50,12 @@ def fit_models(
         raise RuntimeError("Training window contains no observations.")
     isolation = IsolationForestDetector(config).fit(train)
     mahalanobis = MahalanobisDetector(config).fit(train)
+    gru = GRUDetector(config).fit(observations, end_time=config.train_end)
     isolation.save(model_dir)
     mahalanobis.save(model_dir)
+    gru.save(model_dir)
     LOGGER.info("Fitted detectors on %s rows before %s", len(train), config.train_end)
-    return {"isolation_forest": isolation, "mahalanobis": mahalanobis, "train_rows": len(train)}
+    return {"isolation_forest": isolation, "mahalanobis": mahalanobis, "gru": gru, "train_rows": len(train)}
 
 
 def _spatial_evidence(row: pd.Series, prefix: str):
@@ -98,6 +101,9 @@ def score_observations(
     mahalanobis = models["mahalanobis"]
     features["isolation_score"] = isolation.score(features)
     features["multivariate_score"] = mahalanobis.score(features)
+    gru = models.get("gru")
+    if gru is not None:
+        features["gru_score"] = gru.score(observations)
     decisions = []
     for _, row in features.iterrows():
         spatial_by_variable = {
@@ -125,6 +131,7 @@ def score_observations(
             drift_score=float(row.get("drift_score", 0.0) or 0.0),
             stuck_score=float(row.get("stuck_score", 0.0) or 0.0),
             communication_score=float(row.get("communication_score", 0.0) or 0.0),
+            gru_score=(float(row["gru_score"]) if "gru_score" in row and pd.notna(row["gru_score"]) else None),
         )
         decisions.append(fuse_evidence(evidence, target_station_id=str(row["station_id"])))
     result = pd.DataFrame([decision.as_dict() for decision in decisions])

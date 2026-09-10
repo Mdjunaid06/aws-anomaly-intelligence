@@ -27,12 +27,14 @@ class DecisionState(StrEnum):
 class FusionConfig:
     """Centralized thresholds and weights for validation-time tuning."""
 
-    temporal_weight: float = 0.24
-    multivariate_weight: float = 0.20
-    spatial_weight: float = 0.22
-    rule_qc_weight: float = 0.16
-    data_quality_weight: float = 0.10
-    persistence_weight: float = 0.08
+    temporal_weight: float = 0.20
+    multivariate_weight: float = 0.18
+    isolation_weight: float = 0.18
+    spatial_weight: float = 0.18
+    rule_qc_weight: float = 0.14
+    data_quality_weight: float = 0.06
+    persistence_weight: float = 0.06
+    drift_weight: float = 0.10
     anomaly_threshold: float = 0.55
     regional_threshold: float = 0.60
     localized_threshold: float = 0.42
@@ -47,10 +49,12 @@ class FusionConfig:
 class EvidenceInput:
     temporal_score: float = 0.0
     multivariate_score: float = 0.0
+    isolation_score: float = 0.0
     rule_qc_score: float = 0.0
     data_quality_score: float = 1.0
     persistence_score: float = 0.0
     spatial: SpatialEvidence | None = None
+    spatial_by_variable: dict[str, SpatialEvidence] | None = None
     drift_score: float = 0.0
     stuck_score: float = 0.0
     communication_score: float = 0.0
@@ -93,18 +97,22 @@ def _weighted_score(evidence: EvidenceInput, config: FusionConfig) -> float:
     weights = (
         config.temporal_weight,
         config.multivariate_weight,
+        config.isolation_weight,
         config.spatial_weight,
         config.rule_qc_weight,
         config.data_quality_weight,
         config.persistence_weight,
+        config.drift_weight,
     )
     values = (
         evidence.temporal_score,
         evidence.multivariate_score,
+        evidence.isolation_score,
         spatial_score,
         evidence.rule_qc_score,
         evidence.data_quality_score,
         evidence.persistence_score,
+        evidence.drift_score,
     )
     weight_total = sum(weights)
     return _clamp(sum(weight * _clamp(value) for weight, value in zip(weights, values)) / weight_total)
@@ -128,7 +136,43 @@ def fuse_evidence(
     contradicting = spatial.contradicting_stations if spatial else ()
     facts: list[str] = []
 
-    if common_mode_risk >= config.common_mode_threshold:
+    spatial_event_support = bool(
+        spatial
+        and (
+            spatial_score >= config.regional_threshold
+            or (
+                spatial_score >= config.localized_threshold
+                and spatial.geographically_coherent
+            )
+        )
+    )
+    strong_nonspatial_support = (
+        evidence.temporal_score >= 0.8 and evidence.multivariate_score >= 0.5
+    )
+    drift_support = (
+        evidence.drift_score >= config.strong_fault_threshold
+        and (
+            evidence.multivariate_score >= 0.35
+            or evidence.isolation_score >= 0.50
+        )
+    )
+    enough_evidence = confidence >= config.anomaly_threshold or strong_nonspatial_support or drift_support
+    if not enough_evidence:
+        if spatial is None or spatial.insufficient_coverage:
+            classification = DecisionState.INSUFFICIENT_SPATIAL_EVIDENCE
+            root_cause = "insufficient valid neighboring observations"
+            action = "collect more station observations before regional attribution"
+            facts.append("spatial coverage is insufficient for a strong comparison")
+        elif confidence >= 0.30:
+            classification = DecisionState.INCONCLUSIVE
+            root_cause = "conflicting or incomplete evidence"
+            action = "continue monitoring and investigate supporting evidence"
+            facts.append("diagnostic evidence is present but overall anomaly support is insufficient")
+        else:
+            classification = DecisionState.NORMAL
+            root_cause = "no significant anomaly evidence"
+            action = "no immediate action"
+    elif common_mode_risk >= config.common_mode_threshold:
         classification = DecisionState.LIKELY_COMMON_MODE_DATA_FAULT
         root_cause = "suspiciously duplicated or propagated station data"
         action = "inspect ingestion, source messages, and last-known-value propagation"
@@ -168,37 +212,16 @@ def fuse_evidence(
         root_cause = "localized or sub-regional meteorological change"
         action = "monitor the localized event and verify nearby coverage"
         facts.append("a geographically coherent subset changed together")
-    elif (
-        confidence >= config.strong_fault_threshold
-        or (
-            evidence.temporal_score >= 0.8
-            and evidence.multivariate_score >= 0.5
-            and spatial_score < config.localized_threshold
-        )
-    ):
+    elif evidence.temporal_score >= 0.8 and evidence.multivariate_score >= 0.5 and spatial_score < config.localized_threshold:
         classification = DecisionState.LIKELY_SENSOR_FAULT
         root_cause = "localized station or sensor fault"
         action = "inspect the station and compare recent sensor history"
         facts.append("temporal and non-spatial evidence outweigh spatial support")
-    elif confidence >= config.anomaly_threshold:
+    else:
         classification = DecisionState.ANOMALY
         root_cause = "anomalous observation with unresolved cause"
         action = "review the observation and collect more context"
         facts.append("multiple evidence sources indicate unusual behavior")
-    elif spatial is None or spatial.insufficient_coverage:
-        classification = DecisionState.INSUFFICIENT_SPATIAL_EVIDENCE
-        root_cause = "insufficient valid neighboring observations"
-        action = "collect more station observations before regional attribution"
-        facts.append("spatial coverage is insufficient for a strong comparison")
-    elif confidence >= 0.40:
-        classification = DecisionState.INCONCLUSIVE
-        root_cause = "conflicting or incomplete evidence"
-        action = "continue monitoring and investigate supporting evidence"
-        facts.append("evidence does not support a confident root cause")
-    else:
-        classification = DecisionState.NORMAL
-        root_cause = "no significant anomaly evidence"
-        action = "no immediate action"
 
     if spatial:
         facts.append(f"usable neighbors: {spatial.usable_neighbors}/{spatial.total_neighbors}")
@@ -206,7 +229,11 @@ def fuse_evidence(
         if spatial.common_mode_risk > 0:
             facts.append(f"common-mode risk: {spatial.common_mode_risk:.3f}")
 
-    anomaly = classification not in {DecisionState.NORMAL, DecisionState.INSUFFICIENT_SPATIAL_EVIDENCE}
+    anomaly = classification not in {
+        DecisionState.NORMAL,
+        DecisionState.INSUFFICIENT_SPATIAL_EVIDENCE,
+        DecisionState.INCONCLUSIVE,
+    }
     return FusedDecision(
         anomaly=anomaly,
         classification=classification,
@@ -214,12 +241,17 @@ def fuse_evidence(
         evidence={
             "temporal_score": evidence.temporal_score,
             "multivariate_score": evidence.multivariate_score,
+            "isolation_score": evidence.isolation_score,
             "spatial_score": spatial_score,
             "rule_qc_score": evidence.rule_qc_score,
             "data_quality_score": evidence.data_quality_score,
             "common_mode_risk": common_mode_risk,
             "station_reliability": spatial.station_reliability if spatial else 0.0,
             "persistence_score": evidence.persistence_score,
+            "spatial_by_variable": {
+                name: value.as_dict()
+                for name, value in (evidence.spatial_by_variable or {}).items()
+            },
         },
         affected_stations=affected,
         supporting_stations=supporting,

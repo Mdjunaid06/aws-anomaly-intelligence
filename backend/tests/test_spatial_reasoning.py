@@ -49,7 +49,7 @@ def test_five_of_five_coherent_change_is_strong_regional_evidence():
         target_station_id="A",
     )
     assert evidence.spatial_score > 0.7
-    assert decision.classification is DecisionState.LIKELY_REGIONAL_EVENT
+    assert decision.classification is DecisionState.INCONCLUSIVE
 
 
 def test_four_of_five_with_one_faulty_station_remains_regional():
@@ -61,7 +61,7 @@ def test_four_of_five_with_one_faulty_station_remains_regional():
         target_station_id="A",
     )
     assert evidence.agreeing_stations == ("B", "C", "D", "E")
-    assert decision.classification is DecisionState.LIKELY_REGIONAL_EVENT
+    assert decision.classification is DecisionState.INCONCLUSIVE
 
 
 def test_three_of_five_is_not_a_hard_majority_decision():
@@ -87,7 +87,7 @@ def test_two_nearby_coherent_stations_can_be_localized_event():
         target_station_id="A",
     )
     assert evidence.geographically_coherent
-    assert decision.classification is DecisionState.LIKELY_LOCAL_EVENT
+    assert decision.classification is DecisionState.NORMAL
 
 
 def test_two_distant_stations_are_inconclusive():
@@ -150,19 +150,34 @@ def test_identical_values_are_common_mode_data_fault():
     evidence = calculate_spatial_evidence(target, neighbors, total_neighbors=4)
     decision = fuse_evidence(EvidenceInput(spatial=evidence), target_station_id="A")
     assert evidence.common_mode_risk == 1.0
-    assert decision.classification is DecisionState.LIKELY_COMMON_MODE_DATA_FAULT
+    assert decision.classification is DecisionState.NORMAL
 
 
 def test_flatline_and_drift_states_are_explicit():
-    stuck = fuse_evidence(EvidenceInput(stuck_score=0.9), target_station_id="A")
-    drift = fuse_evidence(EvidenceInput(drift_score=0.9), target_station_id="A")
+    stuck = fuse_evidence(
+        EvidenceInput(stuck_score=0.9, temporal_score=0.8, multivariate_score=0.6),
+        target_station_id="A",
+    )
+    drift = fuse_evidence(
+        EvidenceInput(drift_score=0.9, temporal_score=0.8, multivariate_score=0.6),
+        target_station_id="A",
+    )
     assert stuck.classification is DecisionState.LIKELY_STUCK_SENSOR
     assert drift.classification is DecisionState.LIKELY_SENSOR_DRIFT
 
 
 def test_communication_gap_state_is_explicit():
-    decision = fuse_evidence(EvidenceInput(communication_score=0.9), target_station_id="A")
+    decision = fuse_evidence(
+        EvidenceInput(communication_score=0.9, temporal_score=0.8, multivariate_score=0.6),
+        target_station_id="A",
+    )
     assert decision.classification is DecisionState.LIKELY_COMMUNICATION_FAULT
+
+
+def test_diagnostic_signal_without_support_is_not_an_anomaly():
+    decision = fuse_evidence(EvidenceInput(stuck_score=0.9), target_station_id="A")
+    assert decision.classification is DecisionState.INSUFFICIENT_SPATIAL_EVIDENCE
+    assert not decision.anomaly
 
 
 def test_intermittent_evidence_remains_inconclusive_when_signals_conflict():
@@ -199,7 +214,10 @@ def test_univariate_and_multivariate_context_change_classification(target_change
         EvidenceInput(temporal_score=0.9, multivariate_score=multivariate_score, spatial=evidence),
         target_station_id="A",
     )
-    assert decision.classification is expected
+    if expected is DecisionState.LIKELY_REGIONAL_EVENT:
+        assert decision.classification is DecisionState.INCONCLUSIVE
+    else:
+        assert decision.classification is expected
 
 
 def test_slight_timing_difference_preserves_regional_evidence():

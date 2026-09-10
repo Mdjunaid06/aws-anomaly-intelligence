@@ -598,6 +598,27 @@ Rules:
 
 This keeps the results honest and technically credible.
 
+### Implemented validation notes
+
+The runnable pipeline uses the real NOAA GHCNh station files under
+`data/raw/NOAA/Pune_stations`, with clean observations before `2025-01-01`
+used for fitting and the post-2025 period used as holdout data. Controlled
+episodes are written to separate injected and ground-truth files; raw and
+clean processed observations are not modified by injection.
+
+Ground truth records retain station, timestamp, affected variable, original
+and injected values, offsets, scenario parameters, seed, validity status, and
+episode boundaries. Evaluation reports both row-level confusion metrics and
+episode detection, latency, validity, and per-anomaly-type summaries.
+
+The current implementation includes rules-only, Isolation Forest-only,
+multivariate-only, temporal-only, spatial-only, temporal/spatial, and full
+fusion comparisons. Spatial alignment is causal, and spatial evidence is
+contextual rather than an independent anomaly decision. Results remain
+limited by five stations, sparse observation cadence, and a small controlled
+episode set; metrics are demonstration measurements, not statistically
+significant population estimates.
+
 ---
 
 ## 17. Practical Implementation Guidance

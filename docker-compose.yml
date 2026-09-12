@@ -10,5 +10,30 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg2://anomaly:anomaly@postgres:5432/anomaly_intelligence
+      FRONTEND_ORIGIN: http://localhost:5173
+      GENAI_ENABLED: ${GENAI_ENABLED:-false}
+      GENAI_PROVIDER: ${GENAI_PROVIDER:-openai}
+      GENAI_MODEL: ${GENAI_MODEL:-gpt-4o-mini}
+      GENAI_API_KEY: ${GENAI_API_KEY:-}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:

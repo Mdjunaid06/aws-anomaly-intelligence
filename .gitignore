@@ -22,4 +22,6 @@ ml/artifacts/**/*
 # Local notebooks and editor files.
 .ipynb_checkpoints/
 .vscode/
+frontend/node_modules/
+frontend/dist/
 

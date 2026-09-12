@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     genai_provider: Optional[str] = None  # "openai", "anthropic", etc.
     genai_api_key: Optional[str] = None
     genai_model: Optional[str] = None
+    frontend_origin: str = "http://localhost:5173"
 
     # Logging
     log_level: str = "INFO"

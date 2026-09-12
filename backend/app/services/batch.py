@@ -2,14 +2,17 @@
 
 import logging
 from pathlib import Path
+from datetime import timedelta
 from typing import Optional
 
 import pandas as pd
 from sqlalchemy.orm import Session
 
+from ..models import Observation
 from ..core.config import settings
 from .ml_engine import get_ml_engine
 from .anomaly import AnomalyService
+from .health import HealthService
 from .observation import ObservationService
 
 LOGGER = logging.getLogger(__name__)
@@ -116,6 +119,25 @@ def _enrich_observation_with_metadata(obs_df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
+def _load_ml_context(db: Session, obs) -> pd.DataFrame:
+    """Load causal station/network context required by the existing ML pipeline."""
+    start_time = obs.timestamp - timedelta(days=30)
+    observations = db.query(Observation).filter(
+        Observation.timestamp >= start_time,
+        Observation.timestamp <= obs.timestamp,
+    ).order_by(Observation.timestamp.asc()).all()
+    return pd.DataFrame([
+        {
+            "station_id": item.station_id,
+            "timestamp": item.timestamp,
+            "temperature_c": item.temperature_c,
+            "pressure_hpa": item.pressure_hpa,
+            "relative_humidity_pct": item.relative_humidity_pct,
+        }
+        for item in observations
+    ])
+
+
 class BatchProcessingService:
     """Process observations in batches through ML pipeline and save predictions."""
 
@@ -141,14 +163,8 @@ class BatchProcessingService:
             LOGGER.warning("Observation %d not found", observation_id)
             return None
 
-        # Convert to DataFrame for ML pipeline
-        obs_df = pd.DataFrame([{
-            "station_id": obs.station_id,
-            "timestamp": obs.timestamp,
-            "temperature_c": obs.temperature_c,
-            "pressure_hpa": obs.pressure_hpa,
-            "relative_humidity_pct": obs.relative_humidity_pct,
-        }])
+        # Load causal network context so spatial and temporal evidence remain available.
+        obs_df = _load_ml_context(db, obs)
         
         # Enrich with station metadata (station_name, latitude, longitude, elevation_m)
         obs_df = _enrich_observation_with_metadata(obs_df)
@@ -163,42 +179,41 @@ class BatchProcessingService:
                 LOGGER.warning("No results from ML pipeline for observation %d", observation_id)
                 return None
             
-            result = results_df.iloc[0]
+            target_rows = results_df[
+                (results_df["station_id"] == obs.station_id)
+                & (pd.to_datetime(results_df["timestamp"]) == pd.Timestamp(obs.timestamp))
+            ]
+            if target_rows.empty:
+                raise RuntimeError(
+                    f"ML pipeline returned no result for observation {observation_id}"
+                )
+            result = target_rows.iloc[-1]
             
-            # Extract evidence scores (match EvidenceInput dataclass fields)
-            evidence_scores = {
-                "temporal_score": float(result.get("temporal_score", 0.0)),
-                "multivariate_score": float(result.get("multivariate_score", 0.0)),
-                "isolation_score": float(result.get("isolation_score", 0.0)),
-                "rule_qc_score": float(result.get("rule_qc_score", 0.0)),
-                "data_quality_score": float(result.get("data_quality_score", 1.0)),
-                "persistence_score": float(result.get("persistence_score", 0.0)),
-                "drift_score": float(result.get("drift_score", 0.0)),
-                "stuck_score": float(result.get("stuck_score", 0.0)),
-                "communication_score": float(result.get("communication_score", 0.0)),
-                "gru_score": result.get("gru_score"),
-            }
-            
-            # Fuse evidence to get final decision
-            fusion_result = ml_engine.fuse_evidence(evidence_scores, obs.station_id)
-            
-            # Create prediction record
+            # Persist the authoritative decision and evidence returned by the ML pipeline.
+            evidence = result.get("evidence") or {}
             prediction = AnomalyService.create_prediction(
                 db,
                 observation_id=observation_id,
                 station_id=obs.station_id,
                 timestamp=obs.timestamp,
-                is_anomaly=1 if fusion_result["anomaly"] else 0,
-                confidence=fusion_result["confidence"],
-                classification=fusion_result["classification"],
-                evidence_scores=evidence_scores,
-                spatial_evidence=fusion_result.get("evidence", {}).get("spatial"),
-                affected_stations=fusion_result.get("affected_stations"),
-                supporting_stations=fusion_result.get("supporting_stations"),
-                contradicting_stations=fusion_result.get("contradicting_stations"),
-                root_cause=fusion_result.get("root_cause"),
-                recommended_action=fusion_result.get("recommended_action"),
-                explanation_facts=fusion_result.get("explanation_facts"),
+                is_anomaly=1 if bool(result["anomaly"]) else 0,
+                confidence=float(result["confidence"]),
+                classification=str(result["classification"]),
+                evidence_scores=evidence,
+                spatial_evidence=evidence.get("spatial") or evidence.get("spatial_by_variable"),
+                affected_stations=result.get("affected_stations"),
+                supporting_stations=result.get("supporting_stations"),
+                contradicting_stations=result.get("contradicting_stations"),
+                root_cause=result.get("root_cause"),
+                recommended_action=result.get("recommended_action"),
+                explanation_facts=result.get("explanation_facts"),
+            )
+
+            HealthService.persist_ml_health(
+                db,
+                station_id=obs.station_id,
+                observation_timestamp=obs.timestamp,
+                ml_result=result.to_dict(),
             )
             
             # Mark observation as processed
@@ -207,8 +222,8 @@ class BatchProcessingService:
             LOGGER.info(
                 "Scored observation %d: anomaly=%s, confidence=%.2f",
                 observation_id,
-                fusion_result["anomaly"],
-                fusion_result["confidence"],
+                result["anomaly"],
+                result["confidence"],
             )
             
             return {

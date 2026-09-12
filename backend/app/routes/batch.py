@@ -1,6 +1,6 @@
 """Batch processing API routes."""
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from ..core.database import get_db
@@ -57,6 +57,8 @@ def process_observation(
         observation_id,
         include_spatial=include_spatial,
     )
+    if result is None:
+        raise HTTPException(status_code=404, detail="Observation not found")
     return {
         "status": "completed",
         "result": result,

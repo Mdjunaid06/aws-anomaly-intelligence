@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .core.config import settings
 from .core.database import init_db
-from .routes import anomalies, batch, health, observations
+from .routes import anomalies, batch, explanations, health, observations, replay, stations
 
 # Configure logging
 logging.basicConfig(
@@ -28,6 +28,7 @@ async def lifespan(app: FastAPI):
         logger.info("Database initialized")
     except Exception as e:
         logger.error("Failed to initialize database: %s", e)
+        raise
     
     yield
     
@@ -45,9 +46,17 @@ app = FastAPI(
 )
 
 # Add CORS middleware
+allowed_origins = {
+    origin.strip()
+    for origin in (
+        [settings.frontend_origin]
+        + ["http://localhost:5173", "http://127.0.0.1:5173"]
+    )
+    if origin and origin.strip()
+}
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # TODO: Configure in production
+    allow_origins=sorted(allowed_origins),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -58,6 +67,9 @@ app.include_router(observations.router)
 app.include_router(anomalies.router)
 app.include_router(batch.router)
 app.include_router(health.router)
+app.include_router(replay.router)
+app.include_router(explanations.router)
+app.include_router(stations.router)
 
 
 @app.get("/", tags=["root"])

@@ -2,7 +2,9 @@
 
 import json
 import logging
+import math
 from datetime import datetime, timedelta
+from numbers import Real
 from typing import Optional
 
 from sqlalchemy.orm import Session
@@ -11,6 +13,20 @@ from ..models import AnomalyPrediction, Observation
 from .ml_engine import get_ml_engine
 
 LOGGER = logging.getLogger(__name__)
+
+
+def _json_safe(value):
+    """Convert ML values into JSON-compatible Python values for persistence."""
+    if isinstance(value, dict):
+        return {key: _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    if isinstance(value, Real) and not isinstance(value, bool):
+        numeric = float(value)
+        return numeric if math.isfinite(numeric) else None
+    if hasattr(value, "item"):
+        return _json_safe(value.item())
+    return value
 
 
 class AnomalyService:
@@ -37,13 +53,19 @@ class AnomalyService:
     ) -> AnomalyPrediction:
         """Create a new anomaly prediction."""
         ml_engine = get_ml_engine()
+        evidence_scores = _json_safe(evidence_scores)
+        spatial_evidence = _json_safe(spatial_evidence)
+        affected_stations = _json_safe(affected_stations)
+        supporting_stations = _json_safe(supporting_stations)
+        contradicting_stations = _json_safe(contradicting_stations)
+        explanation_facts = _json_safe(explanation_facts)
         
         prediction = AnomalyPrediction(
             observation_id=observation_id,
             station_id=station_id,
             timestamp=timestamp,
             is_anomaly=is_anomaly,
-            confidence=confidence,
+            confidence=float(confidence),
             classification=classification,
             temporal_score=evidence_scores.get("temporal_score"),
             multivariate_score=evidence_scores.get("multivariate_score"),

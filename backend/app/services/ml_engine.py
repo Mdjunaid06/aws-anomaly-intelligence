@@ -7,9 +7,7 @@ from typing import Optional
 import pandas as pd
 
 from ml.src.config import PipelineConfig
-from ml.src.evidence_fusion import FusionConfig, fuse_evidence
-from ml.src.models.pipeline import fit_models, score_observations
-from ml.src.models.health import add_sensor_health
+from ml.src.models.pipeline import score_observations
 
 from ..core.config import settings
 
@@ -26,7 +24,6 @@ class MLEngine:
     def __init__(self):
         """Initialize ML engine with trained models."""
         self.config = PipelineConfig()
-        self.fusion_config = FusionConfig()
         self.model_dir = settings.ml_models_dir
         self.models = self._load_models()
 
@@ -111,38 +108,6 @@ class MLEngine:
             return results
         except Exception as e:
             LOGGER.error("Failed to score batch: %s", e)
-            raise
-
-    def fuse_evidence(
-        self,
-        evidence_dict: dict,
-        target_station_id: str,
-    ) -> dict:
-        """Fuse evidence into final anomaly decision using existing pipeline.
-        
-        Args:
-            evidence_dict: Evidence from ML detectors
-            target_station_id: Station ID for this observation
-            
-        Returns:
-            FusedDecision as dictionary
-        """
-        try:
-            from ml.src.evidence_fusion import EvidenceInput
-
-            # Create EvidenceInput from detector output
-            evidence = EvidenceInput(**evidence_dict)
-            
-            # Call existing fusion - NO DUPLICATION
-            decision = fuse_evidence(
-                evidence,
-                target_station_id=target_station_id,
-                config=self.fusion_config,
-            )
-            
-            return decision.as_dict()
-        except Exception as e:
-            LOGGER.error("Failed to fuse evidence: %s", e)
             raise
 
     def get_model_version(self) -> str:

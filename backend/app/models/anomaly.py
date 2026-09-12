@@ -59,7 +59,7 @@ class AnomalyPrediction(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     __table_args__ = (
-        Index("idx_station_timestamp", "station_id", "timestamp"),
+        Index("idx_anomaly_predictions_station_timestamp", "station_id", "timestamp"),
         Index("idx_is_anomaly", "is_anomaly"),
     )
 

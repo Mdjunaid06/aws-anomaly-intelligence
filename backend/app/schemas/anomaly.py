@@ -37,6 +37,7 @@ class AnomalyResponse(BaseModel):
 
     # Evidence scores
     evidence_detail: AnomalyEvidenceDetail
+    evidence: Optional[dict[str, Any]] = None
 
     # Spatial reasoning
     affected_stations: Optional[list[str]] = None

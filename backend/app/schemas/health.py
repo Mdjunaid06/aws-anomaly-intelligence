@@ -1,7 +1,7 @@
 """Pydantic schemas for sensor health API."""
 
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -31,6 +31,7 @@ class SensorHealthResponse(BaseModel):
     recent_anomaly_count: int
 
     # Metadata
+    health_metrics: Optional[dict[str, Any]] = None
     updated_at: datetime
 
     class Config:

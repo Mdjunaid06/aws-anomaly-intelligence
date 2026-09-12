@@ -36,6 +36,7 @@ def get_anomaly(
         is_anomaly=pred.is_anomaly,
         confidence=pred.confidence,
         classification=pred.classification,
+        evidence=pred.evidence,
         evidence_detail=AnomalyEvidenceDetail(
             temporal_score=pred.temporal_score,
             multivariate_score=pred.multivariate_score,
@@ -93,6 +94,7 @@ def list_anomalies_by_station(
             is_anomaly=pred.is_anomaly,
             confidence=pred.confidence,
             classification=pred.classification,
+            evidence=pred.evidence,
             evidence_detail=AnomalyEvidenceDetail(
                 temporal_score=pred.temporal_score,
                 multivariate_score=pred.multivariate_score,
@@ -157,6 +159,7 @@ def list_all_anomalies(
             is_anomaly=pred.is_anomaly,
             confidence=pred.confidence,
             classification=pred.classification,
+            evidence=pred.evidence,
             evidence_detail=AnomalyEvidenceDetail(
                 temporal_score=pred.temporal_score,
                 multivariate_score=pred.multivariate_score,

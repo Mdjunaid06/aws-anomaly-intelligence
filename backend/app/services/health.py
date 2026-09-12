@@ -53,6 +53,41 @@ class HealthService:
         return health
 
     @staticmethod
+    def persist_ml_health(
+        db: Session,
+        station_id: str,
+        observation_timestamp: datetime,
+        ml_result: dict,
+    ) -> SensorHealth:
+        """Persist sensor health values produced by the authoritative ML pipeline."""
+        health = db.query(SensorHealth).filter(
+            SensorHealth.station_id == station_id
+        ).first()
+        if not health:
+            health = SensorHealth(station_id=station_id)
+            db.add(health)
+
+        if (
+            health.last_observation_timestamp is not None
+            and observation_timestamp < health.last_observation_timestamp
+        ):
+            return health
+
+        health.overall_health = str(ml_result["sensor_health_state"])
+        health.health_score = float(ml_result["sensor_health_score"])
+        health.last_observation_timestamp = observation_timestamp
+        health.health_metrics = {
+            "sensor_anomaly_rate": ml_result.get("sensor_anomaly_rate"),
+            "sensor_health_score": ml_result.get("sensor_health_score"),
+            "sensor_health_state": ml_result.get("sensor_health_state"),
+            "maintenance_recommendation": ml_result.get("maintenance_recommendation"),
+        }
+        db.commit()
+        db.refresh(health)
+        LOGGER.info("Persisted ML health for station %s: %s", station_id, health.overall_health)
+        return health
+
+    @staticmethod
     def get_health(db: Session, station_id: str) -> Optional[SensorHealth]:
         """Get health status for a station."""
         return db.query(SensorHealth).filter(

@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .core.config import settings
 from .core.database import init_db
-from .routes import anomalies, batch, explanations, health, observations, replay, stations
+from .routes import anomalies, batch, explanations, health, observations, replay, stations, system
 
 # Configure logging
 logging.basicConfig(
@@ -70,6 +70,7 @@ app.include_router(health.router)
 app.include_router(replay.router)
 app.include_router(explanations.router)
 app.include_router(stations.router)
+app.include_router(system.router)
 
 
 @app.get("/", tags=["root"])

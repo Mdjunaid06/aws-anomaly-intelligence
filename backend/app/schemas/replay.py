@@ -34,6 +34,8 @@ class ReplayStatus(BaseModel):
     current_timestamp: Optional[datetime] = None
     speed: float = 1.0
     processed_observations: int = 0
+    total_observations: int = 0
+    progress_pct: float = 0.0
     anomaly_count: int = 0
     current_station: Optional[str] = None
     current_prediction: Optional[dict] = None

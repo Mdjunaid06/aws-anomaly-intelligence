@@ -126,7 +126,7 @@ def _load_ml_context(db: Session, obs) -> pd.DataFrame:
         Observation.timestamp >= start_time,
         Observation.timestamp <= obs.timestamp,
     ).order_by(Observation.timestamp.asc()).all()
-    return pd.DataFrame([
+    df = pd.DataFrame([
         {
             "station_id": item.station_id,
             "timestamp": item.timestamp,
@@ -136,6 +136,16 @@ def _load_ml_context(db: Session, obs) -> pd.DataFrame:
         }
         for item in observations
     ])
+    if df.empty:
+        return df
+
+    # Ensure any context station passed to the frozen ML pipeline has at least one valid measurement
+    # so that station-local window grouping never encounters an all-NaN empty group.
+    valid_station_ids = set(
+        df.dropna(subset=["temperature_c", "relative_humidity_pct", "pressure_hpa"])["station_id"].unique()
+    )
+    valid_station_ids.add(obs.station_id)
+    return df[df["station_id"].isin(valid_station_ids)].reset_index(drop=True)
 
 
 class BatchProcessingService:
@@ -161,6 +171,11 @@ class BatchProcessingService:
         obs = ObservationService.get_by_id(db, observation_id)
         if not obs:
             LOGGER.warning("Observation %d not found", observation_id)
+            return None
+
+        is_valid, skip_reason = _validate_observation_data(obs)
+        if not is_valid:
+            LOGGER.warning("Observation %d invalid for scoring: %s", observation_id, skip_reason)
             return None
 
         # Load causal network context so spatial and temporal evidence remain available.

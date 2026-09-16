@@ -9,10 +9,16 @@ from sqlalchemy.orm import Session, sessionmaker
 from .config import settings
 
 # Create database engine
+engine_kwargs = {
+    "echo": settings.database_echo,
+    "pool_pre_ping": True,  # Test connection before using
+}
+if settings.database_url.startswith("sqlite"):
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+
 engine = create_engine(
     settings.database_url,
-    echo=settings.database_echo,
-    pool_pre_ping=True,  # Test connection before using
+    **engine_kwargs,
 )
 
 # Create session factory

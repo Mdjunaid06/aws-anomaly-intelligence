@@ -67,6 +67,7 @@ class ReplayService:
             self._stop_requested = False
             self._resume_event = asyncio.Event()
             self._resume_event.set()
+            total_observations = len(frame)
             self._status = ReplayStatus(
                 state="running",
                 running=True,
@@ -74,6 +75,8 @@ class ReplayService:
                 start_time=frame["timestamp"].min().to_pydatetime(),
                 end_time=frame["timestamp"].max().to_pydatetime(),
                 speed=request.speed,
+                total_observations=total_observations,
+                progress_pct=0.0,
             )
             self._task = asyncio.create_task(self._run(frame, request))
             return self._status.model_copy(deep=True)
@@ -139,6 +142,10 @@ class ReplayService:
                     self._status.current_timestamp = timestamp.to_pydatetime()
                     self._status.current_station = str(row.station_id)
                     self._status.processed_observations += 1
+                    if self._status.total_observations > 0:
+                        self._status.progress_pct = round(
+                            (self._status.processed_observations / self._status.total_observations) * 100, 1
+                        )
                     if result and result.get("is_anomaly"):
                         self._status.anomaly_count += 1
                     self._status.current_prediction = result
@@ -148,6 +155,7 @@ class ReplayService:
                 self._status.state = "completed"
                 self._status.running = False
                 self._status.paused = False
+                self._status.progress_pct = 100.0
         except Exception as exc:
             LOGGER.exception("Replay failed")
             with self._lock:

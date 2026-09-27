@@ -1,61 +1,74 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Activity, AlertTriangle, Bot, ChevronRight, CircleStop, Gauge, MapPin, Pause, Play, RotateCcw, Satellite, ShieldCheck, Wind } from 'lucide-react'
-import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet'
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { useEffect, useState } from 'react'
+import { Activity, Bot, Map, Play } from 'lucide-react'
 import * as api from './api'
+import AnomalyInvestigation from './components/AnomalyInvestigation'
+import NetworkOverview from './components/NetworkOverview'
+import OperatorAssistant from './components/OperatorAssistant'
+import ReplayLab from './components/ReplayLab'
+import StationDrawer from './components/StationDrawer'
+import SystemHeader from './components/SystemHeader'
 
-const statusTone = (value?: string | null) => value?.includes('degrad') || value?.includes('fault') ? 'warn' : value === 'healthy' || value === 'operational' ? 'good' : 'muted'
+type View = 'overview' | 'replay' | 'assistant'
 
-function Metric({ label, value, icon: Icon, tone = 'neutral' }: { label: string; value: string | number; icon: typeof Activity; tone?: string }) {
-  return <div className={`metric ${tone}`}><div className="metric-icon"><Icon size={18} /></div><div><span>{label}</span><strong>{value}</strong></div></div>
-}
-
-function NetworkMap({ stations, onSelect }: { stations: api.Station[]; onSelect: (station: api.Station) => void }) {
-  return <div className="map-wrap"><MapContainer center={[18.2, 74.2]} zoom={8} scrollWheelZoom={false} className="map"><TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />{stations.map((station) => <CircleMarker key={station.station_id} center={[station.latitude, station.longitude]} radius={8} pathOptions={{ color: station.latest_anomaly ? '#be4b4b' : '#187b78', fillOpacity: .9 }} eventHandlers={{ click: () => onSelect(station) }}><Popup><strong>{station.name}</strong><br />{station.station_id}<br />Health: {station.health_state}</Popup></CircleMarker>)}</MapContainer><div className="map-key"><span><i className="dot good-dot" />Operational</span><span><i className="dot alert-dot" />Latest anomaly</span></div></div>
-}
-
-function App() {
+export default function App() {
+  const [view, setView] = useState<View>('overview')
   const [stations, setStations] = useState<api.Station[]>([])
   const [health, setHealth] = useState<api.HealthList | null>(null)
-  const [anomalies, setAnomalies] = useState<api.AnomalyList | null>(null)
-  const [replay, setReplay] = useState<api.ReplayStatus | null>(null)
+  const [anomalies, setAnomalies] = useState<api.Anomaly[]>([])
+  const [status, setStatus] = useState<api.SystemStatus | null>(null)
   const [replayConfig, setReplayConfig] = useState<api.ReplayConfig | null>(null)
-  const [selected, setSelected] = useState<api.Anomaly | null>(null)
-  const [explanation, setExplanation] = useState<api.Explanation | null>(null)
-  const [assistantAnswer, setAssistantAnswer] = useState<api.Assistant | null>(null)
-  const [question, setQuestion] = useState('')
-  const [view, setView] = useState<'overview' | 'replay' | 'assistant'>('overview')
+  const [replay, setReplay] = useState<api.ReplayStatus | null>(null)
+  const [selectedStation, setSelectedStation] = useState<api.Station | null>(null)
+  const [selectedAnomaly, setSelectedAnomaly] = useState<api.Anomaly | null>(null)
   const [error, setError] = useState('')
 
-  const refresh = () => Promise.all([api.getStations(), api.getHealth(), api.getAnomalies(), api.getReplayStatus(), api.getReplayConfig()]).then(([s, h, a, r, c]) => { setStations(s.stations); setHealth(h); setAnomalies(a); setReplay(r); setReplayConfig(c) }).catch((e) => setError(e.message || 'Backend unavailable'))
-  useEffect(() => { refresh(); const id = window.setInterval(refresh, 5000); return () => window.clearInterval(id) }, [])
-  const selectedHealth = useMemo(() => selected ? health?.items.find((item) => item.station_id === selected.station_id) : null, [health, selected])
-  const chartData = (anomalies?.items || []).slice(0, 12).reverse().map((item) => ({ time: new Date(item.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), confidence: Math.round(item.confidence * 100) }))
-  const runReplay = async (action: string) => { try { const next = await api.replayAction(action, action === 'start' ? { speed: 5 } : undefined); setReplay(next) } catch (e) { setError(e instanceof Error ? e.message : 'Replay request failed') } }
-  const explain = async () => { if (!selected) return; try { setExplanation(await api.explainAnomaly(selected.id)) } catch (e) { setError(e instanceof Error ? e.message : 'Explanation unavailable') } }
-  const ask = async () => { if (!question.trim()) return; try { setAssistantAnswer(await api.askAssistant(question, selected?.id)) } catch (e) { setError(e instanceof Error ? e.message : 'Assistant unavailable') } }
+  useEffect(() => {
+    let active = true
+    const refresh = async () => {
+      try {
+        const [system, stationResponse, healthResponse, anomalyResponse, replayStatus, config] = await Promise.all([
+          api.getSystemStatus(), api.getStations(), api.getHealth(), api.getAnomalies(), api.getReplayStatus(), api.getReplayConfig(),
+        ])
+        if (!active) return
+        setStatus(system); setStations(stationResponse.stations); setHealth(healthResponse)
+        setAnomalies(anomalyResponse.items); setReplay(replayStatus); setReplayConfig(config); setError('')
+      } catch (cause) {
+        if (active) setError(cause instanceof Error ? cause.message : 'Backend data is temporarily unavailable.')
+      }
+    }
+    void refresh()
+    const timer = window.setInterval(() => void refresh(), 5000)
+    return () => { active = false; window.clearInterval(timer) }
+  }, [])
 
-  return <div className="app-shell">
-    <header className="topbar"><div className="brand"><div className="brand-mark"><Satellite size={20} /></div><div><strong>AWS Anomaly Intelligence</strong><span>Weather station operations</span></div></div><div className="system-state"><i className="pulse" /> PostgreSQL connected <span className="divider" /> ML pipeline online</div></header>
-    <div className="body-grid">
-      <aside className="sidebar"><div className="side-label">Workspace</div><button className={view === 'overview' ? 'nav active' : 'nav'} onClick={() => setView('overview')}><Activity size={17} /> Overview</button><button className={view === 'replay' ? 'nav active' : 'nav'} onClick={() => setView('replay')}><Play size={17} /> Replay Lab</button><button className={view === 'assistant' ? 'nav active' : 'nav'} onClick={() => setView('assistant')}><Bot size={17} /> Operator assistant</button><div className="sidebar-foot"><div className="side-label">Network</div><div className="network-count"><span className="live-dot" />{stations.length} stations monitored</div><small>Real NOAA observations · PostgreSQL</small></div></aside>
-      <main className="content"><div className="page-heading"><div><p className="eyebrow">FIELD OPERATIONS / {view.toUpperCase()}</p><h1>{view === 'overview' ? 'Network overview' : view === 'replay' ? 'Replay laboratory' : 'Operator assistant'}</h1><p className="subhead">Evidence-led monitoring for the Pune AWS network.</p></div><div className="timestamp">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}<small>Local console time</small></div></div>
-        {error && <div className="error-banner"><AlertTriangle size={17} />{error}<button onClick={() => setError('')}>Dismiss</button></div>}
-        {view === 'overview' && <>
-          <section className="metrics-grid"><Metric label="Stations monitored" value={stations.length} icon={MapPin} /><Metric label="Active anomalies" value={anomalies?.total ?? 0} icon={AlertTriangle} tone={anomalies?.total ? 'alert' : 'neutral'} /><Metric label="Healthy sensors" value={health?.operational ?? 0} icon={ShieldCheck} tone="good" /><Metric label="Attention required" value={(health?.degraded ?? 0) + (health?.failed ?? 0)} icon={Gauge} tone="warn" /></section>
-          <section className="main-grid"><div className="panel map-panel"><div className="panel-head"><div><h2>Station network</h2><span>Current health and latest anomaly state</span></div><button className="icon-button" title="Refresh data" onClick={refresh}><RotateCcw size={16} /></button></div><NetworkMap stations={stations} onSelect={(s) => { const a = anomalies?.items.find((x) => x.station_id === s.station_id); if (a) setSelected(a) }} /></div><div className="panel chart-panel"><div className="panel-head"><div><h2>Anomaly confidence</h2><span>Recent stored predictions</span></div></div>{chartData.length ? <ResponsiveContainer width="100%" height={220}><AreaChart data={chartData}><defs><linearGradient id="confidence" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#c8754c" stopOpacity={.35} /><stop offset="100%" stopColor="#c8754c" stopOpacity={0} /></linearGradient></defs><XAxis dataKey="time" tickLine={false} axisLine={false} /><YAxis domain={[0, 100]} tickLine={false} axisLine={false} unit="%" /><Tooltip /><Area type="monotone" dataKey="confidence" stroke="#c8754c" fill="url(#confidence)" /></AreaChart></ResponsiveContainer> : <div className="empty">No anomaly records yet.</div>}</div></section>
-          <section className="lower-grid"><div className="panel"><div className="panel-head"><div><h2>Recent alerts</h2><span>Investigate stored ML decisions</span></div></div><div className="alert-list">{anomalies?.items.length ? anomalies.items.slice(0, 5).map((item) => <button className="alert-row" key={item.id} onClick={() => setSelected(item)}><span className={`status-mark ${statusTone(item.classification)}`} /><span className="alert-main"><strong>{item.station_id}</strong><small>{item.classification} · {new Date(item.timestamp).toLocaleString()}</small></span><span className="confidence">{Math.round(item.confidence * 100)}%</span><ChevronRight size={16} /></button>) : <div className="empty">No active anomaly records.</div>}</div></div><div className="panel health-panel"><div className="panel-head"><div><h2>Sensor health</h2><span>ML-derived station condition</span></div></div>{health?.items.slice(0, 6).map((item) => <div className="health-row" key={item.station_id}><span>{item.station_id}</span><span className={`health-state ${statusTone(item.overall_health)}`}>{item.overall_health}</span><strong>{item.health_score == null ? '—' : `${Math.round(item.health_score * 100)}%`}</strong></div>)}</div></section>
-        </>}
-        {view === 'replay' && <ReplayPanel replay={replay} config={replayConfig} onAction={runReplay} />}
-        {view === 'assistant' && <AssistantPanel question={question} setQuestion={setQuestion} answer={assistantAnswer} onAsk={ask} />}
+  const investigate = async (predictionId: number) => {
+    try { setSelectedAnomaly(await api.getAnomaly(predictionId)); setSelectedStation(null) }
+    catch { setError(`Could not load prediction ${predictionId}.`) }
+  }
+  const selectStation = (station: api.Station) => { setSelectedAnomaly(null); setSelectedStation(station) }
+  const runReplay = async (action: api.ReplayAction, body?: api.ReplayStart) => {
+    try { setReplay(await api.replayAction(action, body)); setError('') }
+    catch (cause) { setError(cause instanceof Error ? cause.message : `Replay ${action} failed.`) }
+  }
+
+  return <div className="operations-app">
+    <SystemHeader status={status} />
+    <div className="app-frame">
+      <aside className="app-sidebar">
+        <div className="sidebar-section-label">MONITORING</div>
+        <button className={`side-link ${view === 'overview' ? 'active' : ''}`} onClick={() => setView('overview')}><Map size={17} />Network overview</button>
+        <button className={`side-link ${view === 'replay' ? 'active' : ''}`} onClick={() => setView('replay')}><Play size={17} />Replay laboratory</button>
+        <button className={`side-link ${view === 'assistant' ? 'active' : ''}`} onClick={() => setView('assistant')}><Bot size={17} />Operator assistant</button>
+        <div className="sidebar-bottom"><div className="sidebar-section-label">PIPELINE</div><div className="sidebar-fact"><span>Detector models</span><strong>{status?.ml_pipeline.models_loaded.length ?? '—'}</strong></div><div className="sidebar-fact"><span>Source observations</span><strong>{(status?.database.total_observations ?? 0).toLocaleString()}</strong></div><div className="sidebar-footnote"><Activity size={14} />Evidence-led station monitoring</div></div>
+      </aside>
+      <main className="app-main">
+        {error && <div className="error-banner" role="alert"><span>{error}</span><button onClick={() => setError('')}>Dismiss</button></div>}
+        {view === 'overview' && <NetworkOverview stations={stations} anomalies={anomalies} health={health} status={status} onStation={selectStation} onAnomaly={(anomaly) => { setSelectedStation(null); setSelectedAnomaly(anomaly) }} />}
+        {view === 'replay' && <ReplayLab config={replayConfig} status={replay} onAction={runReplay} onInvestigate={(id) => void investigate(id)} />}
+        {view === 'assistant' && <OperatorAssistant selectedPredictionId={selectedAnomaly?.id} />}
       </main>
     </div>
-    {selected && <div className="drawer-backdrop" onClick={() => setSelected(null)}><aside className="drawer" onClick={(e) => e.stopPropagation()}><button className="drawer-close" onClick={() => setSelected(null)}>×</button><p className="eyebrow">ANOMALY INVESTIGATION</p><h2>{selected.station_id}</h2><p className="drawer-time">{new Date(selected.timestamp).toLocaleString()}</p><div className="decision"><span className={selected.is_anomaly ? 'decision-dot alert' : 'decision-dot good'} />{selected.classification}<strong>{Math.round(selected.confidence * 100)}%</strong></div><div className="detail-block"><h3>Probable root cause</h3><p>{selected.root_cause || 'Not recorded'}</p></div><div className="detail-block"><h3>Evidence</h3><div className="evidence-grid">{Object.entries(selected.evidence_detail).map(([key, value]) => <div key={key}><span>{key.replaceAll('_', ' ')}</span><strong>{value == null ? '—' : typeof value === 'number' ? value.toFixed(3) : value}</strong></div>)}</div><pre className="evidence-json">{JSON.stringify(selected.evidence, null, 2)}</pre></div><div className="detail-block"><h3>Sensor health</h3><p>{selectedHealth ? `${selectedHealth.overall_health} · ${selectedHealth.health_score == null ? '—' : Math.round(selectedHealth.health_score * 100) + '%'}` : 'No health record'}</p></div><button className="primary-button" onClick={explain}><Bot size={16} /> Explain this anomaly</button>{explanation && <div className="explanation"><div className="explanation-label">{explanation.fallback ? 'Template explanation' : 'OpenAI explanation'}</div><strong>{explanation.summary}</strong><p>{explanation.explanation}</p></div>}</aside></div>}
+    {selectedStation && <StationDrawer station={selectedStation} onClose={() => setSelectedStation(null)} onInvestigate={(id) => void investigate(id)} />}
+    {selectedAnomaly && <AnomalyInvestigation key={selectedAnomaly.id} anomaly={selectedAnomaly} onClose={() => setSelectedAnomaly(null)} />}
   </div>
 }
-
-function ReplayPanel({ replay, config, onAction }: { replay: api.ReplayStatus | null; config: api.ReplayConfig | null; onAction: (action: string) => void }) { return <section className="replay-layout"><div className="panel replay-controls"><div className="panel-head"><div><h2>Historical replay</h2><span>Real feature data through the production ML path</span></div><span className={`replay-badge ${replay?.state}`}>{replay?.state || 'stopped'}</span></div><div className="replay-clock">{replay?.current_timestamp ? new Date(replay.current_timestamp).toLocaleString() : 'Ready to start'}<small>Current replay time</small></div><div className="control-row"><button className="primary-button" onClick={() => onAction('start')} disabled={replay?.running}><Play size={16} /> Start</button><button className="secondary-button" onClick={() => onAction('pause')} disabled={!replay?.running}><Pause size={16} /> Pause</button><button className="secondary-button" onClick={() => onAction('resume')} disabled={!replay?.paused}><Play size={16} /> Resume</button><button className="secondary-button" onClick={() => onAction('stop')} disabled={!replay?.running && !replay?.paused}><CircleStop size={16} /> Stop</button><button className="icon-button" onClick={() => onAction('reset')} title="Reset replay"><RotateCcw size={16} /></button></div><div className="replay-stats"><Metric label="Processed" value={replay?.processed_observations ?? 0} icon={Activity} /><Metric label="Anomalies" value={replay?.anomaly_count ?? 0} icon={AlertTriangle} tone={replay?.anomaly_count ? 'alert' : 'neutral'} /><Metric label="Current station" value={replay?.current_station || '—'} icon={MapPin} /></div><small className="source-note">Source: {config?.source || 'data/features/aws_features_2024_2025.csv'}</small></div><div className="panel replay-live"><div className="panel-head"><div><h2>Live replay result</h2><span>Latest prediction and health from PostgreSQL</span></div></div>{replay?.current_prediction ? <><div className="live-result"><div><span>Classification</span><strong>{String(replay.current_prediction.classification || '—')}</strong></div><div><span>Confidence</span><strong>{Math.round(Number(replay.current_prediction.confidence || 0) * 100)}%</strong></div></div><pre className="evidence-json">{JSON.stringify(replay.current_prediction, null, 2)}</pre></> : <div className="empty"><Wind size={24} />Start a replay to see real observations arrive.</div>}</div></section> }
-
-function AssistantPanel({ question, setQuestion, answer, onAsk }: { question: string; setQuestion: (v: string) => void; answer: api.Assistant | null; onAsk: () => void }) { return <section className="assistant-layout"><div className="panel assistant-intro"><p className="eyebrow">GROUNDED OPERATIONS ASSISTANT</p><h2>Ask about stored incidents and station health.</h2><p>The assistant only receives structured backend records. It cannot change anomaly decisions or invent readings.</p><div className="suggestions"><button onClick={() => setQuestion('Which stations need attention?')}>Which stations need attention?</button><button onClick={() => setQuestion('What evidence supports the latest alert?')}>What evidence supports the latest alert?</button><button onClick={() => setQuestion('Is the latest issue likely a sensor fault?')}>Is the latest issue likely a sensor fault?</button></div></div><div className="panel chat-panel"><div className="chat-answer">{answer ? <><div className="explanation-label">{answer.fallback ? 'Evidence-based fallback' : 'OpenAI response'}</div><p>{answer.answer}</p></> : <div className="empty"><Bot size={28} />Ask a focused operations question.</div>}</div><div className="chat-input"><input value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && onAsk()} placeholder="Ask about a station or incident..." /><button className="primary-button" onClick={onAsk}>Ask</button></div></div></section> }
-
-export default App

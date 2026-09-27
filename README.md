@@ -20,46 +20,71 @@ The `ml/` directory is authoritative and must remain unchanged. GenAI explains s
 - Node.js 22+ and npm
 - Docker Desktop with Compose
 
-## Local Setup
+## Run ML, Backend, and Frontend (Windows PowerShell)
+
+Run these commands from the repository root. The ML pipeline is not a separate server: prepare/train its artifacts once, then FastAPI loads and calls the existing ML engine for scoring and replay.
+
+### 1. Create the Python environment and prepare ML artifacts
 
 ```powershell
-cd D:\aws-anomaly-intelligence
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
+python -m pip install --upgrade pip
+pip install -r requirements.txt
 Copy-Item .env.example .env
+python scripts/prepare_data.py
+python scripts/train_model.py
 ```
 
-Start PostgreSQL:
+The preparation step reads the raw NOAA files and creates processed observations and station metadata. Training creates the feature CSV and detector artifacts consumed by the backend. For the optional injected-anomaly evaluation, also run:
 
 ```powershell
-docker compose up -d postgres
+python scripts/inject_anomalies.py
+python scripts/evaluate_model.py
 ```
 
-The local `.env` should use the Compose database:
+### 2. Start the database and backend
+
+Configure `DATABASE_URL` in the root `.env`. For the Compose PostgreSQL service, use:
 
 ```text
 DATABASE_URL=postgresql+psycopg2://anomaly:anomaly@localhost:5432/anomaly_intelligence
 ```
 
-Start the backend:
+Start PostgreSQL in one terminal:
 
 ```powershell
-python -m uvicorn backend.app.main:app --reload --port 8000
+docker compose up -d postgres
 ```
 
-Open the API docs at `http://localhost:8000/docs`.
+Start FastAPI in another terminal from the repository root (activate `.venv` in that terminal first):
 
-Start the frontend in a second terminal:
+```powershell
+python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+API docs: `http://127.0.0.1:8000/docs`.
+
+### 3. Start the frontend
+
+In a third terminal:
 
 ```powershell
 cd frontend
 npm install
-Copy-Item .env.example .env
-npm run dev
+npm run dev -- --host 127.0.0.1
 ```
 
-Open `http://localhost:5173`.
+Open `http://127.0.0.1:5173`. The Vite app calls the backend at `http://localhost:8000` by default; override this with `VITE_API_BASE_URL` in `frontend/.env` if needed. Do not put backend secrets in the frontend environment.
+
+### Verify
+
+```powershell
+python -m pytest -q
+Push-Location frontend; npm run build; Pop-Location
+```
+
+The dashboard's system indicators show database, ML, replay, and optional GenAI status. Replay and observation scoring run through the backend and the same ML pipeline; there is no separate ML process to start.
 
 ## Product Features
 

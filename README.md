@@ -51,6 +51,14 @@ Configure `DATABASE_URL` in the root `.env`. For the Compose PostgreSQL service,
 DATABASE_URL=postgresql+psycopg2://anomaly:anomaly@localhost:5432/anomaly_intelligence
 ```
 
+To use the committed local SQLite snapshot and its existing observations/predictions, set this instead:
+
+```text
+DATABASE_URL=sqlite:///./aws_anomaly.db
+```
+
+With SQLite, skip the PostgreSQL `docker compose` command. The snapshot is included in the repository. The generated processed data, feature CSV, and ML model artifacts are intentionally not tracked; recreate them with `prepare_data.py` and `train_model.py` above. Choosing PostgreSQL creates a separate, initially empty database; start replay to populate it.
+
 Start PostgreSQL in one terminal:
 
 ```powershell

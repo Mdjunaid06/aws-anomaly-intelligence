@@ -94,6 +94,12 @@ Push-Location frontend; npm run build; Pop-Location
 
 The dashboard's system indicators show database, ML, replay, and optional GenAI status. Replay and observation scoring run through the backend and the same ML pipeline; there is no separate ML process to start.
 
+### Expected UI on a fresh start
+
+With the committed SQLite snapshot selected, processed data prepared, and models trained, the overview should show 6 station metadata entries, 1,004 stored observations, and 3 stored anomalies. The system header should report SQLite connected, ML online, replay stopped, and GenAI fallback unless a provider is configured. Metadata includes one station without observations, so replay configuration lists 5 stations while the map can show 6.
+
+Replay state is held in backend memory and is not restored from the database. After starting or restarting the backend, open **Replay laboratory** and press **Start replay** (default speed: 5x) to see the timestamp, current weather values, classification, and progress advance. Stopping or restarting the backend resets replay progress but does not delete saved observations or predictions.
+
 ## Product Features
 
 - Overview dashboard with real station health, anomaly records, and map data
@@ -172,7 +178,14 @@ POST /batch/observation/{id}
 
 ## Docker
 
-Run the full local product:
+Generated processed data, features, and model artifacts are not tracked by Git. Create them from the raw NOAA files before building the backend image:
+
+```powershell
+python scripts/prepare_data.py
+python scripts/train_model.py
+```
+
+Then run the full local product from the repository root:
 
 ```powershell
 docker compose up --build
@@ -183,6 +196,16 @@ docker compose up --build
 - PostgreSQL: `localhost:5432`
 
 Compose passes the database hostname as `postgres` to the backend container. Do not use `localhost` for the database URL inside Docker.
+
+## Troubleshooting the Demo
+
+- `GET /stations/` returns 503: station metadata is missing. Run `python scripts/prepare_data.py` from the repository root.
+- `GET /replay/config` returns 400 with “Replay source not found”: the feature CSV is missing. Run `python scripts/train_model.py` after preparing data.
+- `/system/status` reports the ML pipeline as error or no models loaded: train the models with `python scripts/train_model.py`, then restart FastAPI.
+- The dashboard shows empty data or request errors: confirm FastAPI is listening on port 8000, check `VITE_API_BASE_URL`, and ensure the frontend origin is allowed by backend CORS.
+- The header reports GenAI fallback: this is expected when GenAI is disabled or no backend key is configured; anomaly detection and deterministic explanations still work.
+- Replay shows stopped at startup: this is expected because replay state is process-local. Start replay from Replay laboratory.
+- Counts differ when using PostgreSQL: it is a separate, initially empty database. Start replay to populate it; use `sqlite:///./aws_anomaly.db` to inspect the committed local snapshot.
 
 ## Validation
 

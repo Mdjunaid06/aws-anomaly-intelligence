@@ -16,7 +16,9 @@
     "react": "latest",
     "react-dom": "latest",
     "react-leaflet": "latest",
-    "recharts": "latest"
+    "react-markdown": "^10.1.0",
+    "recharts": "latest",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@types/leaflet": "latest",

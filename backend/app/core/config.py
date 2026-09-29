@@ -1,6 +1,5 @@
 """Backend configuration - load from environment."""
 
-import os
 from pathlib import Path
 from typing import Optional
 
@@ -30,9 +29,10 @@ class Settings(BaseSettings):
 
     # GenAI (optional)
     genai_enabled: bool = False
-    genai_provider: Optional[str] = None  # "openai", "anthropic", etc.
+    genai_provider: Optional[str] = None  # "openai" or "xai"
     genai_api_key: Optional[str] = None
     genai_model: Optional[str] = None
+    genai_base_url: Optional[str] = None
     frontend_origin: str = "http://localhost:5173"
 
     # Logging

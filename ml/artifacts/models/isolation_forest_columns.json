@@ -1,0 +1,21 @@
+[
+  "temperature_zscore",
+  "humidity_zscore",
+  "pressure_zscore",
+  "temperature_rate",
+  "humidity_rate",
+  "pressure_rate",
+  "temperature_residual",
+  "humidity_residual",
+  "pressure_residual",
+  "temperature_flatline_run",
+  "humidity_flatline_run",
+  "pressure_flatline_run",
+  "gap_hours",
+  "variable_disagreement",
+  "hour_sin",
+  "hour_cos",
+  "day_sin",
+  "day_cos",
+  "elevation_m"
+]

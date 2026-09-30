@@ -156,8 +156,8 @@ Put it only in the root backend `.env` file:
 
 ```text
 GENAI_ENABLED=true
-GENAI_PROVIDER=openai
-GENAI_MODEL=gpt-4o-mini
+GENAI_PROVIDER=groq
+GENAI_MODEL=openai/gpt-oss-20b
 GENAI_API_KEY=your_key_here
 ```
 

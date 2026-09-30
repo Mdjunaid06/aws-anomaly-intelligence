@@ -14,6 +14,7 @@ pandas
 numpy
 scipy
 pyarrow
+psycopg[binary]
 
 # Machine Learning
 scikit-learn

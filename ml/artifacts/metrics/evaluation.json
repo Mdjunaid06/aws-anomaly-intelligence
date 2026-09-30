@@ -1,0 +1,776 @@
+{
+  "rows_evaluated": 3527,
+  "ground_truth_label_rows": 62,
+  "positive_rows": 46,
+  "predicted_positive_rows": 26,
+  "precision": 0.23076923076923078,
+  "recall": 0.13043478260869565,
+  "f1": 0.16666666666666666,
+  "accuracy": 0.9829883753898497,
+  "true_positive": 6,
+  "false_positive": 20,
+  "true_negative": 3461,
+  "false_negative": 40,
+  "false_alarm_rate": 0.005745475438092502,
+  "validity_status_counts": {
+    "valid_detector_test": 62
+  },
+  "episodes_total": 16,
+  "episodes_detected": 6,
+  "episodes_missed": 10,
+  "episode_detection_rate": 0.375,
+  "mean_detection_latency_hours": 4.5,
+  "root_cause_accuracy": 0.0967741935483871,
+  "episode_root_cause_accuracy": 0.25,
+  "by_anomaly_type": {
+    "communication_outage": {
+      "rows": 18,
+      "detected": 0,
+      "episodes": 2,
+      "detected_episodes": 0,
+      "mean_confidence": 0.29897341871081584
+    },
+    "humidity_spike": {
+      "rows": 2,
+      "detected": 0,
+      "episodes": 2,
+      "detected_episodes": 0,
+      "mean_confidence": 0.2807200311984278
+    },
+    "isolated_multivariate": {
+      "rows": 6,
+      "detected": 6,
+      "episodes": 2,
+      "detected_episodes": 2,
+      "mean_confidence": 0.564079044668561
+    },
+    "missing_data": {
+      "rows": 6,
+      "detected": 0,
+      "episodes": 2,
+      "detected_episodes": 0,
+      "mean_confidence": 0.18389814433423868
+    },
+    "pressure_drop": {
+      "rows": 2,
+      "detected": 2,
+      "episodes": 2,
+      "detected_episodes": 2,
+      "mean_confidence": 0.5981942146054324
+    },
+    "sensor_drift": {
+      "rows": 12,
+      "detected": 1,
+      "episodes": 2,
+      "detected_episodes": 1,
+      "mean_confidence": 0.38115468099989663
+    },
+    "stuck_sensor": {
+      "rows": 14,
+      "detected": 0,
+      "episodes": 2,
+      "detected_episodes": 0,
+      "mean_confidence": 0.3924613909761554
+    },
+    "temperature_spike": {
+      "rows": 2,
+      "detected": 1,
+      "episodes": 2,
+      "detected_episodes": 1,
+      "mean_confidence": 0.4800545638059362
+    }
+  },
+  "baselines": {
+    "rules_only": {
+      "rows_evaluated": 3527,
+      "ground_truth_label_rows": 62,
+      "positive_rows": 46,
+      "predicted_positive_rows": 541,
+      "precision": 0.022181146025878003,
+      "recall": 0.2608695652173913,
+      "f1": 0.04088586030664395,
+      "accuracy": 0.8403742557414233,
+      "true_positive": 12,
+      "false_positive": 529,
+      "true_negative": 2952,
+      "false_negative": 34,
+      "false_alarm_rate": 0.15196782533754669,
+      "validity_status_counts": {
+        "valid_detector_test": 62
+      },
+      "episodes_total": 16,
+      "episodes_detected": 2,
+      "episodes_missed": 14,
+      "episode_detection_rate": 0.125,
+      "mean_detection_latency_hours": 28.5,
+      "root_cause_accuracy": null,
+      "episode_root_cause_accuracy": null,
+      "by_anomaly_type": {
+        "communication_outage": {
+          "rows": 18,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.29897341871081584
+        },
+        "humidity_spike": {
+          "rows": 2,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.2807200311984278
+        },
+        "isolated_multivariate": {
+          "rows": 6,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.564079044668561
+        },
+        "missing_data": {
+          "rows": 6,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.18389814433423868
+        },
+        "pressure_drop": {
+          "rows": 2,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.5981942146054324
+        },
+        "sensor_drift": {
+          "rows": 12,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.38115468099989663
+        },
+        "stuck_sensor": {
+          "rows": 14,
+          "detected": 12,
+          "episodes": 2,
+          "detected_episodes": 2,
+          "mean_confidence": 0.3924613909761554
+        },
+        "temperature_spike": {
+          "rows": 2,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.4800545638059362
+        }
+      }
+    },
+    "isolation_forest_only": {
+      "rows_evaluated": 3527,
+      "ground_truth_label_rows": 62,
+      "positive_rows": 46,
+      "predicted_positive_rows": 113,
+      "precision": 0.08849557522123894,
+      "recall": 0.21739130434782608,
+      "f1": 0.12578616352201258,
+      "accuracy": 0.9605897363198186,
+      "true_positive": 10,
+      "false_positive": 103,
+      "true_negative": 3378,
+      "false_negative": 36,
+      "false_alarm_rate": 0.029589198506176386,
+      "validity_status_counts": {
+        "valid_detector_test": 62
+      },
+      "episodes_total": 16,
+      "episodes_detected": 7,
+      "episodes_missed": 9,
+      "episode_detection_rate": 0.4375,
+      "mean_detection_latency_hours": 0.42857142857142855,
+      "root_cause_accuracy": null,
+      "episode_root_cause_accuracy": null,
+      "by_anomaly_type": {
+        "communication_outage": {
+          "rows": 18,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.29897341871081584
+        },
+        "humidity_spike": {
+          "rows": 2,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.2807200311984278
+        },
+        "isolated_multivariate": {
+          "rows": 6,
+          "detected": 6,
+          "episodes": 2,
+          "detected_episodes": 2,
+          "mean_confidence": 0.564079044668561
+        },
+        "missing_data": {
+          "rows": 6,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.18389814433423868
+        },
+        "pressure_drop": {
+          "rows": 2,
+          "detected": 2,
+          "episodes": 2,
+          "detected_episodes": 2,
+          "mean_confidence": 0.5981942146054324
+        },
+        "sensor_drift": {
+          "rows": 12,
+          "detected": 4,
+          "episodes": 2,
+          "detected_episodes": 1,
+          "mean_confidence": 0.38115468099989663
+        },
+        "stuck_sensor": {
+          "rows": 14,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.3924613909761554
+        },
+        "temperature_spike": {
+          "rows": 2,
+          "detected": 2,
+          "episodes": 2,
+          "detected_episodes": 2,
+          "mean_confidence": 0.4800545638059362
+        }
+      }
+    },
+    "multivariate_only": {
+      "rows_evaluated": 3527,
+      "ground_truth_label_rows": 62,
+      "positive_rows": 46,
+      "predicted_positive_rows": 42,
+      "precision": 0.19047619047619047,
+      "recall": 0.17391304347826086,
+      "f1": 0.18181818181818182,
+      "accuracy": 0.9795860504678197,
+      "true_positive": 8,
+      "false_positive": 34,
+      "true_negative": 3447,
+      "false_negative": 38,
+      "false_alarm_rate": 0.009767308244757253,
+      "validity_status_counts": {
+        "valid_detector_test": 62
+      },
+      "episodes_total": 16,
+      "episodes_detected": 6,
+      "episodes_missed": 10,
+      "episode_detection_rate": 0.375,
+      "mean_detection_latency_hours": 3.5,
+      "root_cause_accuracy": null,
+      "episode_root_cause_accuracy": null,
+      "by_anomaly_type": {
+        "communication_outage": {
+          "rows": 18,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.29897341871081584
+        },
+        "humidity_spike": {
+          "rows": 2,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.2807200311984278
+        },
+        "isolated_multivariate": {
+          "rows": 6,
+          "detected": 6,
+          "episodes": 2,
+          "detected_episodes": 2,
+          "mean_confidence": 0.564079044668561
+        },
+        "missing_data": {
+          "rows": 6,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.18389814433423868
+        },
+        "pressure_drop": {
+          "rows": 2,
+          "detected": 2,
+          "episodes": 2,
+          "detected_episodes": 2,
+          "mean_confidence": 0.5981942146054324
+        },
+        "sensor_drift": {
+          "rows": 12,
+          "detected": 3,
+          "episodes": 2,
+          "detected_episodes": 1,
+          "mean_confidence": 0.38115468099989663
+        },
+        "stuck_sensor": {
+          "rows": 14,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.3924613909761554
+        },
+        "temperature_spike": {
+          "rows": 2,
+          "detected": 1,
+          "episodes": 2,
+          "detected_episodes": 1,
+          "mean_confidence": 0.4800545638059362
+        }
+      }
+    },
+    "temporal_only": {
+      "rows_evaluated": 3527,
+      "ground_truth_label_rows": 62,
+      "positive_rows": 46,
+      "predicted_positive_rows": 17,
+      "precision": 0.23529411764705882,
+      "recall": 0.08695652173913043,
+      "f1": 0.12698412698412698,
+      "accuracy": 0.9844060107740289,
+      "true_positive": 4,
+      "false_positive": 13,
+      "true_negative": 3468,
+      "false_negative": 42,
+      "false_alarm_rate": 0.0037345590347601263,
+      "validity_status_counts": {
+        "valid_detector_test": 62
+      },
+      "episodes_total": 16,
+      "episodes_detected": 4,
+      "episodes_missed": 12,
+      "episode_detection_rate": 0.25,
+      "mean_detection_latency_hours": 0.0,
+      "root_cause_accuracy": null,
+      "episode_root_cause_accuracy": null,
+      "by_anomaly_type": {
+        "communication_outage": {
+          "rows": 18,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.29897341871081584
+        },
+        "humidity_spike": {
+          "rows": 2,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.2807200311984278
+        },
+        "isolated_multivariate": {
+          "rows": 6,
+          "detected": 3,
+          "episodes": 2,
+          "detected_episodes": 1,
+          "mean_confidence": 0.564079044668561
+        },
+        "missing_data": {
+          "rows": 6,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.18389814433423868
+        },
+        "pressure_drop": {
+          "rows": 2,
+          "detected": 2,
+          "episodes": 2,
+          "detected_episodes": 2,
+          "mean_confidence": 0.5981942146054324
+        },
+        "sensor_drift": {
+          "rows": 12,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.38115468099989663
+        },
+        "stuck_sensor": {
+          "rows": 14,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.3924613909761554
+        },
+        "temperature_spike": {
+          "rows": 2,
+          "detected": 1,
+          "episodes": 2,
+          "detected_episodes": 1,
+          "mean_confidence": 0.4800545638059362
+        }
+      }
+    },
+    "spatial_only": {
+      "rows_evaluated": 3527,
+      "ground_truth_label_rows": 62,
+      "positive_rows": 46,
+      "predicted_positive_rows": 208,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "accuracy": 0.9279841224836972,
+      "true_positive": 0,
+      "false_positive": 208,
+      "true_negative": 3273,
+      "false_negative": 46,
+      "false_alarm_rate": 0.05975294455616202,
+      "validity_status_counts": {
+        "valid_detector_test": 62
+      },
+      "episodes_total": 16,
+      "episodes_detected": 0,
+      "episodes_missed": 16,
+      "episode_detection_rate": 0.0,
+      "mean_detection_latency_hours": null,
+      "root_cause_accuracy": null,
+      "episode_root_cause_accuracy": null,
+      "by_anomaly_type": {
+        "communication_outage": {
+          "rows": 18,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.29897341871081584
+        },
+        "humidity_spike": {
+          "rows": 2,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.2807200311984278
+        },
+        "isolated_multivariate": {
+          "rows": 6,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.564079044668561
+        },
+        "missing_data": {
+          "rows": 6,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.18389814433423868
+        },
+        "pressure_drop": {
+          "rows": 2,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.5981942146054324
+        },
+        "sensor_drift": {
+          "rows": 12,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.38115468099989663
+        },
+        "stuck_sensor": {
+          "rows": 14,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.3924613909761554
+        },
+        "temperature_spike": {
+          "rows": 2,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.4800545638059362
+        }
+      }
+    },
+    "temporal_spatial": {
+      "rows_evaluated": 3527,
+      "ground_truth_label_rows": 62,
+      "positive_rows": 46,
+      "predicted_positive_rows": 2114,
+      "precision": 0.011825922421948912,
+      "recall": 0.5434782608695652,
+      "f1": 0.023148148148148147,
+      "accuracy": 0.4017578678763822,
+      "true_positive": 25,
+      "false_positive": 2089,
+      "true_negative": 1392,
+      "false_negative": 21,
+      "false_alarm_rate": 0.6001149095087619,
+      "validity_status_counts": {
+        "valid_detector_test": 62
+      },
+      "episodes_total": 16,
+      "episodes_detected": 13,
+      "episodes_missed": 3,
+      "episode_detection_rate": 0.8125,
+      "mean_detection_latency_hours": 1.8461538461538463,
+      "root_cause_accuracy": null,
+      "episode_root_cause_accuracy": null,
+      "by_anomaly_type": {
+        "communication_outage": {
+          "rows": 18,
+          "detected": 0,
+          "episodes": 2,
+          "detected_episodes": 0,
+          "mean_confidence": 0.29897341871081584
+        },
+        "humidity_spike": {
+          "rows": 2,
+          "detected": 2,
+          "episodes": 2,
+          "detected_episodes": 2,
+          "mean_confidence": 0.2807200311984278
+        },
+        "isolated_multivariate": {
+          "rows": 6,
+          "detected": 6,
+          "episodes": 2,
+          "detected_episodes": 2,
+          "mean_confidence": 0.564079044668561
+        },
+        "missing_data": {
+          "rows": 6,
+          "detected": 1,
+          "episodes": 2,
+          "detected_episodes": 1,
+          "mean_confidence": 0.18389814433423868
+        },
+        "pressure_drop": {
+          "rows": 2,
+          "detected": 2,
+          "episodes": 2,
+          "detected_episodes": 2,
+          "mean_confidence": 0.5981942146054324
+        },
+        "sensor_drift": {
+          "rows": 12,
+          "detected": 5,
+          "episodes": 2,
+          "detected_episodes": 2,
+          "mean_confidence": 0.38115468099989663
+        },
+        "stuck_sensor": {
+          "rows": 14,
+          "detected": 11,
+          "episodes": 2,
+          "detected_episodes": 2,
+          "mean_confidence": 0.3924613909761554
+        },
+        "temperature_spike": {
+          "rows": 2,
+          "detected": 2,
+          "episodes": 2,
+          "detected_episodes": 2,
+          "mean_confidence": 0.4800545638059362
+        }
+      }
+    }
+  },
+  "gru_only": {
+    "rows_evaluated": 3527,
+    "ground_truth_label_rows": 62,
+    "positive_rows": 46,
+    "predicted_positive_rows": 43,
+    "precision": 0.06976744186046512,
+    "recall": 0.06521739130434782,
+    "f1": 0.06741573033707865,
+    "accuracy": 0.9764672526226255,
+    "true_positive": 3,
+    "false_positive": 40,
+    "true_negative": 3441,
+    "false_negative": 43,
+    "false_alarm_rate": 0.011490950876185005,
+    "validity_status_counts": {
+      "valid_detector_test": 62
+    },
+    "episodes_total": 16,
+    "episodes_detected": 3,
+    "episodes_missed": 13,
+    "episode_detection_rate": 0.1875,
+    "mean_detection_latency_hours": 0.0,
+    "root_cause_accuracy": 0.0,
+    "episode_root_cause_accuracy": 0.0,
+    "by_anomaly_type": {
+      "communication_outage": {
+        "rows": 18,
+        "detected": 0,
+        "episodes": 2,
+        "detected_episodes": 0,
+        "mean_confidence": 0.29897341871081584
+      },
+      "humidity_spike": {
+        "rows": 2,
+        "detected": 0,
+        "episodes": 2,
+        "detected_episodes": 0,
+        "mean_confidence": 0.2859870025931318
+      },
+      "isolated_multivariate": {
+        "rows": 6,
+        "detected": 3,
+        "episodes": 2,
+        "detected_episodes": 1,
+        "mean_confidence": 0.5806277032110049
+      },
+      "missing_data": {
+        "rows": 6,
+        "detected": 0,
+        "episodes": 2,
+        "detected_episodes": 0,
+        "mean_confidence": 0.18389814433423868
+      },
+      "pressure_drop": {
+        "rows": 2,
+        "detected": 0,
+        "episodes": 2,
+        "detected_episodes": 0,
+        "mean_confidence": 0.5733402205370002
+      },
+      "sensor_drift": {
+        "rows": 12,
+        "detected": 0,
+        "episodes": 2,
+        "detected_episodes": 0,
+        "mean_confidence": 0.35364130334308824
+      },
+      "stuck_sensor": {
+        "rows": 14,
+        "detected": 0,
+        "episodes": 2,
+        "detected_episodes": 0,
+        "mean_confidence": 0.375033088630644
+      },
+      "temperature_spike": {
+        "rows": 2,
+        "detected": 2,
+        "episodes": 2,
+        "detected_episodes": 2,
+        "mean_confidence": 0.5233833501554416
+      }
+    }
+  },
+  "fusion_plus_gru": {
+    "rows_evaluated": 3527,
+    "ground_truth_label_rows": 62,
+    "positive_rows": 46,
+    "predicted_positive_rows": 25,
+    "precision": 0.2,
+    "recall": 0.10869565217391304,
+    "f1": 0.14084507042253522,
+    "accuracy": 0.9827048483130139,
+    "true_positive": 5,
+    "false_positive": 20,
+    "true_negative": 3461,
+    "false_negative": 41,
+    "false_alarm_rate": 0.005745475438092502,
+    "validity_status_counts": {
+      "valid_detector_test": 62
+    },
+    "episodes_total": 16,
+    "episodes_detected": 5,
+    "episodes_missed": 11,
+    "episode_detection_rate": 0.3125,
+    "mean_detection_latency_hours": 0.0,
+    "root_cause_accuracy": 0.0967741935483871,
+    "episode_root_cause_accuracy": 0.25,
+    "by_anomaly_type": {
+      "communication_outage": {
+        "rows": 18,
+        "detected": 0,
+        "episodes": 2,
+        "detected_episodes": 0,
+        "mean_confidence": 0.29897341871081584
+      },
+      "humidity_spike": {
+        "rows": 2,
+        "detected": 0,
+        "episodes": 2,
+        "detected_episodes": 0,
+        "mean_confidence": 0.2859870025931318
+      },
+      "isolated_multivariate": {
+        "rows": 6,
+        "detected": 6,
+        "episodes": 2,
+        "detected_episodes": 2,
+        "mean_confidence": 0.5806277032110049
+      },
+      "missing_data": {
+        "rows": 6,
+        "detected": 0,
+        "episodes": 2,
+        "detected_episodes": 0,
+        "mean_confidence": 0.18389814433423868
+      },
+      "pressure_drop": {
+        "rows": 2,
+        "detected": 2,
+        "episodes": 2,
+        "detected_episodes": 2,
+        "mean_confidence": 0.5733402205370002
+      },
+      "sensor_drift": {
+        "rows": 12,
+        "detected": 0,
+        "episodes": 2,
+        "detected_episodes": 0,
+        "mean_confidence": 0.35364130334308824
+      },
+      "stuck_sensor": {
+        "rows": 14,
+        "detected": 0,
+        "episodes": 2,
+        "detected_episodes": 0,
+        "mean_confidence": 0.375033088630644
+      },
+      "temperature_spike": {
+        "rows": 2,
+        "detected": 1,
+        "episodes": 2,
+        "detected_episodes": 1,
+        "mean_confidence": 0.5233833501554416
+      }
+    }
+  },
+  "clean_holdout": {
+    "rows_evaluated": 3527,
+    "ground_truth_label_rows": 0,
+    "positive_rows": 0,
+    "predicted_positive_rows": 22,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "accuracy": 0.9937624043096116,
+    "true_positive": 0,
+    "false_positive": 22,
+    "true_negative": 3505,
+    "false_negative": 0,
+    "false_alarm_rate": 0.0062375956903884325,
+    "episodes_total": 0,
+    "episodes_detected": 0,
+    "episodes_missed": 0,
+    "episode_detection_rate": 0.0,
+    "mean_detection_latency_hours": null,
+    "root_cause_accuracy": null,
+    "episode_root_cause_accuracy": null,
+    "by_anomaly_type": {}
+  },
+  "training_diagnostics": {
+    "rows": 3463,
+    "predicted_anomalies": 24
+  }
+}

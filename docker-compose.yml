@@ -17,10 +17,13 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg2://anomaly:anomaly@postgres:5432/anomaly_intelligence
       FRONTEND_ORIGIN: http://localhost:5173
+
       GENAI_ENABLED: ${GENAI_ENABLED:-false}
-      GENAI_PROVIDER: ${GENAI_PROVIDER:-openai}
-      GENAI_MODEL: ${GENAI_MODEL:-gpt-4o-mini}
+      GENAI_PROVIDER: ${GENAI_PROVIDER:-groq}
+      GENAI_MODEL: ${GENAI_MODEL:-openai/gpt-oss-20b}
+      GENAI_BASE_URL: ${GENAI_BASE_URL:-https://api.groq.com/openai/v1}
       GENAI_API_KEY: ${GENAI_API_KEY:-}
+
     ports:
       - "8000:8000"
     depends_on:
